@@ -10,10 +10,10 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>uk.gov.crowncommercial.dts</groupId>
-	<artifactId>ccs-scale-guided-match-orchestration-service</artifactId>
+	<artifactId>ccs-scale-guided-match-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ccs-scale-guided-match-orchestration-service</name>
-	<description>SCALE Guided Match Orchestration service</description>
+	<name>ccs-scale-guided-match-service</name>
+	<description>SCALE Guided Match Service</description>
 
 	<properties>
 		<java.version>1.8</java.version>
