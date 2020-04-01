@@ -1,4 +1,4 @@
-package uk.gov.crowncommercial.dts.scale;
+package uk.gov.crowncommercial.dts.scale.service.gm;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

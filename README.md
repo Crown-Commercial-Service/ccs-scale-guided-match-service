@@ -1,2 +1,2 @@
-# ccs-scale-guided-match-orchestration-service-
-Scale project guided match orchestration Java microservice.
+# ccs-scale-guided-match-service
+SCALE project Guided Match Java microservice.
