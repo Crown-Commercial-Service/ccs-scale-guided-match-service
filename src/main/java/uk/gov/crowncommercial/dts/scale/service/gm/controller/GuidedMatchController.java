@@ -1,26 +1,46 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.Question;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.QuestionType;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 
 /**
  * Guided Match Controller.
  *
  */
 @RestController
+@RequestMapping(produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+@Slf4j
 public class GuidedMatchController {
 
-  Logger logger = LoggerFactory.getLogger(GuidedMatchController.class);
+  @PostMapping("/journeys/{journey-id}")
+  public StartJourneyResponse startJourney(@PathVariable("journey-id") final String journeyId,
+      @RequestBody final JourneySelectionParameters journeySelectionParameters) {
 
-  @GetMapping("/journeys/{id}")
-  public Question getJourney(@PathVariable(value = "id") final String id) {
-    logger.debug("getJourney: {}", id);
-    return new Question("123-abc-456-def", "Yes or No?", "Hint..", QuestionType.BOOLEAN);
+    log.debug("startJourney(journey-id: {}, journeySelectionParameters: {})", journeyId,
+        journeySelectionParameters);
+
+    return new StartJourneyResponse(UUID.randomUUID().toString(), new HashSet<>());
+  }
+
+  @PostMapping("/journey-instances/{journey-instance-id}/questions/{question-id}")
+  public GetJourneyQuestionOutcomeResponse getJourneyQuestionOutcome(
+      @PathVariable("journey-instance-id") final String journeyInstanceId,
+      @PathVariable("question-id") final String questionId,
+      @RequestBody final Set<AnsweredQuestion> answeredQuestions) {
+
+    log.debug(
+        "getJourneyQuestionOutcome(journey-instance-id: {}, question-id: {}, answeredQuestions: {})",
+        journeyInstanceId, questionId, answeredQuestions);
+
+    return new GetJourneyQuestionOutcomeResponse(
+        new Outcome(OutcomeType.SUPPORT, Instant.now(), null), new ArrayList<>());
   }
 
 }
