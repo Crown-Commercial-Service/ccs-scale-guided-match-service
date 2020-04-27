@@ -11,6 +11,6 @@ public class Question {
   String id;
   String text;
   String hint;
-  String type;
+  QuestionType type;
 
 }

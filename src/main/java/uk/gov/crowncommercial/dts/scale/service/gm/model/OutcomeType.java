@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Enumerated outcome types
  */
 public enum OutcomeType {
-  QUESTION, LOT, SUPPORT;
+  QUESTION, AGREEMENT, SUPPORT;
 
   @JsonValue
   public String getName() {
