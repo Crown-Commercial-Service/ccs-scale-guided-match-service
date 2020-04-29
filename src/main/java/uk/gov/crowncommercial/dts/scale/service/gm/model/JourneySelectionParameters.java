@@ -8,16 +8,16 @@ import lombok.Value;
 /**
  *
  */
-@JsonDeserialize(builder = JourneySelectionParameters.JourneySelectionParametersBuilder.class)
+@JsonDeserialize(builder = JourneySelectionParameters._Builder.class)
 @Value
-@Builder
+@Builder(builderClassName = "_Builder")
 public class JourneySelectionParameters {
 
   String searchTerm;
   String modifier;
 
   @JsonPOJOBuilder(withPrefix = "")
-  public static class JourneySelectionParametersBuilder {
+  public static class _Builder {
     // Enhanced by Lombok
   }
 

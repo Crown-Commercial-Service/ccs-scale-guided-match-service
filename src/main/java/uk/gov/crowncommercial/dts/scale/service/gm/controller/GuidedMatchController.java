@@ -1,14 +1,12 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
+import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
 
 /**
  * Guided Match Controller.
@@ -16,8 +14,11 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
  */
 @RestController
 @RequestMapping(produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 @Slf4j
 public class GuidedMatchController {
+
+  private final DecisionTreeService decisionTreeService;
 
   @PostMapping("/journeys/{journey-id}")
   public StartJourneyResponse startJourney(@PathVariable("journey-id") final String journeyId,
@@ -26,7 +27,7 @@ public class GuidedMatchController {
     log.debug("startJourney(journey-id: {}, journeySelectionParameters: {})", journeyId,
         journeySelectionParameters);
 
-    return new StartJourneyResponse(UUID.randomUUID().toString(), new HashSet<>());
+    return decisionTreeService.startJourney(journeyId);
   }
 
   @PostMapping("/journey-instances/{journey-instance-id}/questions/{question-id}")
@@ -39,8 +40,15 @@ public class GuidedMatchController {
         "getJourneyQuestionOutcome(journey-instance-id: {}, question-id: {}, answeredQuestions: {})",
         journeyInstanceId, questionId, answeredQuestions);
 
-    return new GetJourneyQuestionOutcomeResponse(
-        new Outcome(OutcomeType.SUPPORT, Instant.now(), null), new ArrayList<>());
+    return decisionTreeService.getJourneyQuestionOutcome(journeyInstanceId, questionId,
+        answeredQuestions);
+  }
+
+  @GetMapping("/journey-instances/{journey-instance-id}")
+  public GetJourneyHistoryResponse getJourneyHistory(
+      @PathVariable("journey-instance-id") final String journeyInstanceId) {
+
+    return null;
   }
 
 }
