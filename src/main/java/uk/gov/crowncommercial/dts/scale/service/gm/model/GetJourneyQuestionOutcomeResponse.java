@@ -15,7 +15,7 @@ import lombok.Value;
 public class GetJourneyQuestionOutcomeResponse {
 
   Outcome outcome;
-  List<QuestionHistory> questionHistory;
+  List<QuestionHistory> journeyHistory;
 
   @JsonPOJOBuilder(withPrefix = "")
   public static class _Builder {
