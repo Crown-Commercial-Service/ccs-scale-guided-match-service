@@ -1,0 +1,53 @@
+{
+    "outcome": {
+        "outcomeType": "question",
+        "timestamp": "2020-04-29T10:47:00Z",
+        "data": [
+            {
+                "question": {
+                    "id": "ccb5ba4c-75b5-11ea-bc55-0242ac130003",
+                    "text": "Do you need additional services?",
+                    "type": "list"
+                },
+                "definedAnswers": [
+                    {
+                        "id": "ccb59b2a-75b5-11ea-bc55-0242ac130003",
+                        "text": "No",
+                        "order": 1
+                    },
+                    {
+                        "id": "ccb5958a-75b5-11ea-bc55-0242ac130003",
+                        "text": "Security",
+                        "hint": "For example, guards or CCTV",
+                        "order": 2
+                    },
+                    {
+                        "id": "ccb59666-75b5-11ea-bc55-0242ac130003",
+                        "text": "Grounds maintenance",
+                        "hint": "For example, regular window cleaning or path resurfacing",
+                        "order": 3
+                    },
+                    {
+                        "id": "ccb59742-75b5-11ea-bc55-0242ac130003",
+                        "text": "Catering",
+                        "hint": "For example, regular pre-made food delivery or onsite cooking",
+                        "order": 4
+                    },
+                    {
+                        "id": "ccb59800-75b5-11ea-bc55-0242ac130003",
+                        "text": "Pest Control",
+                        "hint": "For example, dealing with wasps or mice",
+                        "order": 5
+                    },
+                    {
+                        "id": "ccb598c8-75b5-11ea-bc55-0242ac130003",
+                        "text": "Yes",
+                        "order": 6
+                    }
+                ]
+            }
+        ]
+    },
+    "journeyHistory": []
+}
+

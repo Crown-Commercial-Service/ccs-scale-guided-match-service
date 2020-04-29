@@ -18,11 +18,6 @@ public class Agreement {
 
   String number;
   boolean scale;
-
-  /**
-   * Should be {@link RouteToMarket#BAT} or {@link RouteToMarket#CAT} at agreement level.
-   */
-  RouteToMarket type;
   Set<Lot> lots;
 
   @JsonPOJOBuilder(withPrefix = "")

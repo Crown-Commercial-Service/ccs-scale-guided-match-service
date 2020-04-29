@@ -1,0 +1,42 @@
+{
+	"outcome": {
+		"outcomeType": "question",
+		"timestamp": "2020-04-29T10:47:00Z",
+		"data": [
+			{
+				"question": {
+					"id": "ccb5a930-75b5-11ea-bc55-0242ac130003",
+					"text": "Choose which service you need:",
+					"type": "list"
+				},
+				"definedAnswers": [
+					{
+						"id": "ccb59350-75b5-11ea-bc55-0242ac130003",
+						"text": "Cleanroom services",
+						"hint": "Cleanroom services', hint: 'Specialist Cleanroom laundry services including washing, finishing, collection and return of cleanroom garments at the required ISO classification.",
+						"order": 1
+					},
+					{
+						"id": "ccb5924c-75b5-11ea-bc55-0242ac130003",
+						"text": "Theatre pack and gowns",
+						"hint": "Laundry services for re-useable Theatre packs such as surgical gowns, drapes and packs. Includes washing, finishing, collection and return.",
+						"order": 2
+					},
+					{
+						"id": "ccb58fd6-75b5-11ea-bc55-0242ac130003",
+						"text": "Linen hire with standard wash",
+						"hint": "Hire of linen, such as bed sheets and blankets, and includes washing, finishing, collection and return.",
+						"order": 3
+					},
+					{
+						"id": "b87a0bcc-654e-11ea-bc55-0242ac130003",
+						"text": "Standard wash",
+						"hint": "Laundry service including washing, finishing, collection and return of Buyer’s own linen items.",
+						"order": 4
+					}
+				]
+			}
+		]
+	},
+	"journeyHistory": []
+}

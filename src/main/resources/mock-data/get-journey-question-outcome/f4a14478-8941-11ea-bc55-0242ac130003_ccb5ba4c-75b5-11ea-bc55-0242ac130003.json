@@ -1,0 +1,21 @@
+{
+    "outcome": {
+        "outcomeType": "agreement",
+        "timestamp": "2020-04-29T10:47:00Z",
+        "data": [
+            {
+                "number": "RM6154",
+                "scale": true,
+                "lots":[
+                    {
+                        "number": "2",
+                        "type": "cat",
+                        "routeToMarket": "fc",
+                        "url": ""
+                    }
+                ]
+            }
+        ]
+    },
+    "journeyHistory": []
+}

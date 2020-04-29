@@ -21,7 +21,7 @@ public class Outcome {
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = As.EXTERNAL_PROPERTY,
       property = "outcomeType")
   @JsonSubTypes({@JsonSubTypes.Type(value = QuestionDefinitionList.class, name = "question"),
-      @JsonSubTypes.Type(value = Agreement.class, name = "agreement")})
+      @JsonSubTypes.Type(value = AgreementList.class, name = "agreement")})
   @Nullable
   OutcomeData data;
 

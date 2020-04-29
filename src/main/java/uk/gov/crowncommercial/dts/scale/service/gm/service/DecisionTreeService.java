@@ -31,7 +31,7 @@ public class DecisionTreeService {
 
     // TODO: Get history from JourneyInstance repo?
     String fileName =
-        String.format("get-journey-question-outcome/%s-%s.json", journeyInstanceId, questionId);
+        String.format("get-journey-question-outcome/%s_%s.json", journeyInstanceId, questionId);
     return dataLoader.convertJsonToObject(fileName, GetJourneyQuestionOutcomeResponse.class);
 
   }
