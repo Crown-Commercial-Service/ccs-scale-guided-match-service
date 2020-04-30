@@ -7,20 +7,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
+import uk.gov.crowncommercial.dts.scale.service.gm.service.GuidedMatchHistoryService;
 
 /**
  * Guided Match Controller.
  *
  */
 @RestController
-@RequestMapping(produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+@RequestMapping(produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @Slf4j
 public class GuidedMatchController {
 
   private final DecisionTreeService decisionTreeService;
+  private final GuidedMatchHistoryService guidedMatchHistoryService;
 
-  @PostMapping("/journeys/{journey-id}")
+  @PostMapping(path = "/journeys/{journey-id}", consumes = APPLICATION_JSON_VALUE)
   public StartJourneyResponse startJourney(@PathVariable("journey-id") final String journeyId,
       @RequestBody final JourneySelectionParameters journeySelectionParameters) {
 
@@ -30,7 +32,8 @@ public class GuidedMatchController {
     return decisionTreeService.startJourney(journeyId);
   }
 
-  @PostMapping("/journey-instances/{journey-instance-id}/questions/{question-id}")
+  @PostMapping(path = "/journey-instances/{journey-instance-id}/questions/{question-id}",
+      consumes = APPLICATION_JSON_VALUE)
   public GetJourneyQuestionOutcomeResponse getJourneyQuestionOutcome(
       @PathVariable("journey-instance-id") final String journeyInstanceId,
       @PathVariable("question-id") final String questionId,
@@ -48,7 +51,9 @@ public class GuidedMatchController {
   public GetJourneyHistoryResponse getJourneyHistory(
       @PathVariable("journey-instance-id") final String journeyInstanceId) {
 
-    return null;
+    log.debug("getJourneyHistory(journey-instance-id: {})", journeyInstanceId);
+
+    return guidedMatchHistoryService.getJourneyHistory(journeyInstanceId);
   }
 
 }
