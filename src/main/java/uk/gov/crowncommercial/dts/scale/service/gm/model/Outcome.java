@@ -10,9 +10,7 @@ import lombok.Data;
 /**
  * Varying-type outcome (agreement, question, support)
  */
-// @JsonDeserialize(builder = Outcome._Builder.class)
 @Data
-// @Builder(builderClassName = "_Builder")
 public class Outcome {
 
   OutcomeType outcomeType;
@@ -24,10 +22,5 @@ public class Outcome {
       @JsonSubTypes.Type(value = AgreementList.class, name = "agreement")})
   @Nullable
   OutcomeData data;
-
-  // @JsonPOJOBuilder(withPrefix = "")
-  // public static class _Builder {
-  // // Enhanced by Lombok
-  // }
 
 }
