@@ -5,9 +5,11 @@ import java.util.Set;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.controller.model.GetJourneySummaryResponse;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.GuidedMatchHistoryService;
+import uk.gov.crowncommercial.dts.scale.service.gm.service.SearchTermLookupService;
 
 /**
  * Guided Match Controller.
@@ -19,8 +21,18 @@ import uk.gov.crowncommercial.dts.scale.service.gm.service.GuidedMatchHistorySer
 @Slf4j
 public class GuidedMatchController {
 
+  private final SearchTermLookupService searchTermLookupService;
   private final DecisionTreeService decisionTreeService;
   private final GuidedMatchHistoryService guidedMatchHistoryService;
+
+  @GetMapping("/journey-summaries/{lookup-entry-id}")
+  public GetJourneySummaryResponse getJourneySummary(
+      @PathVariable("lookup-entry-id") final String lookupEntryId) {
+
+    log.debug("getJourneySummary(lookup-entry-id: {})", lookupEntryId);
+
+    return searchTermLookupService.getJourneySummary(lookupEntryId);
+  }
 
   @PostMapping(path = "/journeys/{journey-id}", consumes = APPLICATION_JSON_VALUE)
   public StartJourneyResponse startJourney(@PathVariable("journey-id") final String journeyId,
