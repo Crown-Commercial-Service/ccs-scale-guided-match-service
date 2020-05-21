@@ -5,7 +5,6 @@ import java.util.Set;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.crowncommercial.dts.scale.service.gm.controller.model.GetJourneySummaryResponse;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.GuidedMatchHistoryService;
