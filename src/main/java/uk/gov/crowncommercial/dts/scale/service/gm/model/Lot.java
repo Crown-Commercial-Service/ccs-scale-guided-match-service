@@ -20,5 +20,6 @@ public class Lot {
    */
   RouteToMarket routeToMarket;
   String url;
+  boolean scale;
 
 }

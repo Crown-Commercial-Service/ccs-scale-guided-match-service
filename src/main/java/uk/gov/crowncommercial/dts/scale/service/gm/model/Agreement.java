@@ -12,7 +12,6 @@ import lombok.Value;
 public class Agreement {
 
   String number;
-  boolean scale;
   Set<Lot> lots;
 
 }
