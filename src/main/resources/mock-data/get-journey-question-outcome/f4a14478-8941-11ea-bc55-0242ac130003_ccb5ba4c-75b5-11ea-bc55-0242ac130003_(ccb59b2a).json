@@ -5,13 +5,13 @@
 		"data": [
 			{
 				"number": "RM6154",
-				"scale": true,
 				"lots": [
 					{
 						"number": "2",
 						"type": "cat",
 						"routeToMarket": "fc",
-						"url": ""
+						"url": "",
+						"scale": true
 					}
 				]
 			}
