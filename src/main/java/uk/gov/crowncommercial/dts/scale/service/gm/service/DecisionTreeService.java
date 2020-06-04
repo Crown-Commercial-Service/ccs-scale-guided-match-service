@@ -34,7 +34,7 @@ public class DecisionTreeService {
     // First 8 digits of the answer UUIDs is sufficient
     final StringJoiner sj = new StringJoiner(",");
     answeredQuestions.stream().findFirst().get().getAnswers().stream()
-        .map(a -> StringUtils.substringBefore(a, "-")).sorted().forEach(sj::add);
+        .map(a -> StringUtils.substringBefore(a.getId(), "-")).sorted().forEach(sj::add);
 
     // TODO: Get history from JourneyInstance repo?
     String fileName = String.format("get-journey-question-outcome/%s_%s_(%s).json",

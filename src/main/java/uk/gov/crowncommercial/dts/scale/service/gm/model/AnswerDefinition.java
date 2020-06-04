@@ -12,5 +12,7 @@ public class AnswerDefinition {
   String text;
   String hint;
   int order;
+  Boolean mutuallyExclusive;
+  ConditionalInput conditionalInput;
 
 }
