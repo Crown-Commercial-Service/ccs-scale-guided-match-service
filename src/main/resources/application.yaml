@@ -5,10 +5,23 @@ logging:
   level:
     uk.gov.crowncommercial.dts.scale: DEBUG
     org.springframework: INFO
-
+    # org.hibernate: DEBUG
+    
+ 
+spring:
+  jpa:
+    database: postgresql
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    
 ---
 spring:
   profiles: local
+  datasource:
+    # Credentials via environment variables ONLY.
+    url: jdbc:postgresql://localhost:5432/postgres  
+  
 server:
   servlet:
     context-path: /guided-match-service
