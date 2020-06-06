@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.GetJourneySummaryResponse;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.SearchDomain;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.SearchDomainRepo;
-import uk.gov.crowncommercial.dts.scale.service.gm.temp.DataLoader;
 
 /**
  *
@@ -17,14 +17,16 @@ public class SearchTermLookupService {
 
   private final SearchDomainRepo searchDomainRepo;
 
-  private final DataLoader dataLoader;
+  public GetJourneySummaryResponse getJourneySummary(final Integer lookupEntryId) {
 
-  public GetJourneySummaryResponse getJourneySummary(final String lookupEntryId) {
+    SearchDomain searchDomain = searchDomainRepo.findById(lookupEntryId)
+        .orElseThrow(() -> new RuntimeException("TODO: 404 No search domain record found"));
 
-    searchDomainRepo.findAll().stream().forEach(sd -> log.info(sd.toString()));
+    log.debug("Found SearchDomain record: {}", searchDomain.toString());
 
-    return dataLoader.convertJsonToObject("get-journey-summary/" + lookupEntryId + ".json",
-        GetJourneySummaryResponse.class);
+    return new GetJourneySummaryResponse(searchDomain.getJourney().getId().toString(),
+        searchDomain.getModifierJourneyName(), searchDomain.getModifierJourneyDescription(),
+        "TODO: Unknown");
   }
 
 }

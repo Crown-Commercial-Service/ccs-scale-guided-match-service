@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import org.hibernate.annotations.Immutable;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -12,6 +13,7 @@ import lombok.experimental.FieldDefaults;
  *
  */
 @Entity
+@Immutable
 @Table(name = "search_terms")
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)

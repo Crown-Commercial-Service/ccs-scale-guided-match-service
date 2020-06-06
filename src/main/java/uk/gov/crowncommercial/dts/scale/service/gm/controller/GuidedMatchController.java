@@ -26,7 +26,7 @@ public class GuidedMatchController {
 
   @GetMapping("/journey-summaries/{lookup-entry-id}")
   public GetJourneySummaryResponse getJourneySummary(
-      @PathVariable("lookup-entry-id") final String lookupEntryId) {
+      @PathVariable("lookup-entry-id") final Integer lookupEntryId) {
 
     log.debug("getJourneySummary(lookup-entry-id: {})", lookupEntryId);
 

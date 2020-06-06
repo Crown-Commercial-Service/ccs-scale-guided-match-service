@@ -1,9 +1,7 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model.entity;
 
-import java.util.UUID;
 import javax.persistence.*;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -26,9 +24,9 @@ public class SearchDomain {
   @JoinColumn(name = "search_id")
   SearchTerm searchTerm;
 
-  @Column(name = "journey_id")
-  @Type(type = "pg-uuid")
-  UUID journeyId;
+  @ManyToOne
+  @JoinColumn(name = "journey_id")
+  Journey journey;
 
   @Column(name = "modifier_journey_name")
   String modifierJourneyName;
