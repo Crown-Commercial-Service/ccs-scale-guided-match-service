@@ -6,7 +6,7 @@ import lombok.Value;
  * Journey with embedded first question
  */
 @Value
-public class Journey {
+public class DTJourney {
 
   String uuid;
   String name;
