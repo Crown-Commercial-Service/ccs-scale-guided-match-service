@@ -14,6 +14,12 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: validate
+
+external:
+  decision-tree-service:    
+    uri-templates:
+      get-journey: "/journeys/{journey-uuid}"
+      get-journey-question-outcome: "/journeys/{journey-uuid}/questions/{question-uuid}/outcome&modifier={modifier}"
     
 ---
 spring:
@@ -25,3 +31,7 @@ spring:
 server:
   servlet:
     context-path: /guided-match-service
+    
+external:
+  decision-tree-service:    
+    url: http://127.0.0.1:9000/decision-tree
