@@ -19,7 +19,7 @@ external:
   decision-tree-service:    
     uri-templates:
       get-journey: "/journeys/{journey-uuid}"
-      get-journey-question-outcome: "/journeys/{journey-uuid}/questions/{question-uuid}/outcome&modifier={modifier}"
+      get-journey-question-outcome: "/journeys/{journey-uuid}/questions/{question-uuid}/outcome"
     
 ---
 spring:

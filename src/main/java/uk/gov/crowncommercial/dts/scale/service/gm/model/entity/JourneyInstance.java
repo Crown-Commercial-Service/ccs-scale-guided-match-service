@@ -2,8 +2,10 @@ package uk.gov.crowncommercial.dts.scale.service.gm.model.entity;
 
 import java.time.LocalDate;
 import java.util.Set;
+import java.util.UUID;
 import javax.persistence.*;
 import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Type;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +24,10 @@ public class JourneyInstance {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "journey_instance_id")
   Long id;
+
+  @Column(name = "journey_instance_uuid")
+  @Type(type = "pg-uuid")
+  UUID uuid;
 
   @ManyToOne
   @JoinColumn(name = "journey_id")
