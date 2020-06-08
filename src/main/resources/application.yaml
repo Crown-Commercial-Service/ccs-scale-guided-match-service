@@ -9,6 +9,11 @@ logging:
     
  
 spring:
+  jackson:
+    default-property-inclusion: non-null
+    property-naming-strategy: LOWER_CAMEL_CASE 
+    deserialization:
+      fail-on-missing-external-type-id-property: false
   jpa:
     database: postgresql
     show-sql: true

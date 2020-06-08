@@ -31,7 +31,10 @@ public class SearchDomain {
   @Column(name = "modifier_journey_name")
   String modifierJourneyName;
 
-  @Column(name = "modifier_journey_description")
-  String modifierJourneyDescription;
+  @Column(name = "journey_selection_text")
+  String journeySelectionText;
+
+  @Column(name = "journey_selection_description")
+  String journeySelectionDescription;
 
 }

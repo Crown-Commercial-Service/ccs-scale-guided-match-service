@@ -25,8 +25,8 @@ public class SearchTermLookupService {
     log.debug("Found SearchDomain record: {}", searchDomain.toString());
 
     return new GetJourneySummaryResponse(searchDomain.getJourney().getId().toString(),
-        searchDomain.getModifierJourneyName(), searchDomain.getModifierJourneyDescription(),
-        "TODO: Unknown");
+        searchDomain.getModifierJourneyName(), searchDomain.getJourneySelectionText(),
+        searchDomain.getJourneySelectionDescription());
   }
 
 }
