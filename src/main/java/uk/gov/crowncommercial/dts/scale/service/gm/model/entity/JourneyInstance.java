@@ -1,6 +1,7 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model.entity;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import javax.persistence.*;
@@ -31,7 +32,10 @@ public class JourneyInstance {
   @JoinColumn(name = "journey_id")
   Journey journey;
 
-  @OneToMany
+  @Column(name = "original_search_term")
+  String originalSearchTerm;
+
+  @OneToMany(cascade = CascadeType.ALL)
   @JoinColumn(name = "journey_instance_id")
   Set<JourneyInstanceQuestion> journeyInstanceQuestions;
 
@@ -40,5 +44,12 @@ public class JourneyInstance {
 
   @Column(name = "journey_end_date")
   LocalDate endDate;
+
+  public Set<JourneyInstanceQuestion> getJourneyInstanceQuestions() {
+    if (journeyInstanceQuestions == null) {
+      journeyInstanceQuestions = new HashSet<>();
+    }
+    return journeyInstanceQuestions;
+  }
 
 }

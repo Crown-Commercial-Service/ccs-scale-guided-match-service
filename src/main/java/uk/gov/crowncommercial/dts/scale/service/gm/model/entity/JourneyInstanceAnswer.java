@@ -23,6 +23,9 @@ public class JourneyInstanceAnswer {
   @Column(name = "journey_instance_answer_id")
   Long id;
 
+  @Column(name = "journey_instance_question_id")
+  Long journeyInstanceQuestionId;
+
   @Column(columnDefinition = "uuid", name = "journey_answer_id")
   UUID answerId;
 

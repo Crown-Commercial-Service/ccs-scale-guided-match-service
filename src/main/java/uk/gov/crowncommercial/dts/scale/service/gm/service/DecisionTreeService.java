@@ -42,7 +42,8 @@ public class DecisionTreeService {
     this.getJourneyQuestionOutcomeUriTemplate = getJourneyQuestionOutcomeUriTemplate;
   }
 
-  public StartJourneyResponse startJourney(final String journeyId) {
+  public StartJourneyResponse startJourney(final String journeyId,
+      final JourneySelectionParameters journeySelectionParameters) {
 
     // Start a 'session' by creating and persisting a new Journey Instance
     DTJourney dtJourney =
@@ -52,8 +53,9 @@ public class DecisionTreeService {
 
     log.debug("Journey from Decision Tree service: {}", dtJourney);
 
-    JourneyInstance journeyInstance = journeyInstanceService
-        .createNewJourneyInstance(journeyRepo.findById(UUID.fromString(dtJourney.getUuid())).get());
+    JourneyInstance journeyInstance = journeyInstanceService.createJourneyInstance(
+        journeyRepo.findById(UUID.fromString(dtJourney.getUuid())).get(),
+        journeySelectionParameters.getSearchTerm());
 
     // TODO: Global handler for RestClientException
 
@@ -63,8 +65,7 @@ public class DecisionTreeService {
         new DTQuestionDefinitionList(Arrays.asList(dtJourney.getFirstQuestion())));
 
     // Update journey history with details of the first question:
-    // TODO
-    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, questionDefinitionList);
+    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinitionList);
 
     return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
   }
@@ -91,6 +92,8 @@ public class DecisionTreeService {
         journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
             .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
 
+    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions);
+
     // TODO: Call DT service get question instance outcome
     Map<String, String> uriTemplateVars = new HashMap<>();
     uriTemplateVars.put("journey-uuid", journeyInstance.getJourney().getId().toString());
@@ -106,15 +109,12 @@ public class DecisionTreeService {
       outcomeData = questionDefinitionList;
 
       // Update journey history with details of the next question(s)
-      journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, questionDefinitionList);
+      journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance,
+          questionDefinitionList);
     } else if (dtOutcome.getOutcomeType() == OutcomeType.AGREEMENT) {
       outcomeData = dtOutcome.getData();
     }
     // Otherwise it should be the SUPPORT type and the outcome data is left null
-
-    // TODO: Update the journey history
-    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions);
-
 
     return new GetJourneyQuestionOutcomeResponse(Outcome.builder()
         .outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now()).data(outcomeData).build(),

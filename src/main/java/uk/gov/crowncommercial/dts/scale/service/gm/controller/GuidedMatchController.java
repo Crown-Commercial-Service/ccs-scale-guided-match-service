@@ -40,7 +40,7 @@ public class GuidedMatchController {
     log.debug("startJourney(journey-id: {}, journeySelectionParameters: {})", journeyId,
         journeySelectionParameters);
 
-    return decisionTreeService.startJourney(journeyId);
+    return decisionTreeService.startJourney(journeyId, journeySelectionParameters);
   }
 
   @PostMapping(path = "/journey-instances/{journey-instance-id}/questions/{question-id}",
