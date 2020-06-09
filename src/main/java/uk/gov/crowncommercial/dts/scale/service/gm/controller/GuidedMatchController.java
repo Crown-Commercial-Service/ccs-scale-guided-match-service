@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
-import uk.gov.crowncommercial.dts.scale.service.gm.service.GuidedMatchHistoryService;
+import uk.gov.crowncommercial.dts.scale.service.gm.service.JourneyInstanceService;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.SearchTermLookupService;
 
 /**
@@ -22,7 +22,7 @@ public class GuidedMatchController {
 
   private final SearchTermLookupService searchTermLookupService;
   private final DecisionTreeService decisionTreeService;
-  private final GuidedMatchHistoryService guidedMatchHistoryService;
+  private final JourneyInstanceService guidedMatchHistoryService;
 
   @GetMapping("/journey-summaries/{lookup-entry-id}")
   public GetJourneySummaryResponse getJourneySummary(

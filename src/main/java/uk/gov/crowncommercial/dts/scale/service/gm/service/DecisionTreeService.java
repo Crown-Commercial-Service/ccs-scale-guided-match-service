@@ -1,7 +1,6 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,12 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.Journey;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.JourneyInstance;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.external.dt.DTJourney;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.external.dt.DTOutcome;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.external.dt.DTQuestionDefinitionList;
-import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceRepo;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyRepo;
 
 /**
@@ -25,20 +22,20 @@ import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyRepo;
 @Slf4j
 public class DecisionTreeService {
 
-  private final JourneyInstanceRepo journeyInstanceRepo;
+  private final JourneyInstanceService journeyInstanceService;
   private final JourneyRepo journeyRepo;
 
   private final RestTemplate restTemplate;
   private final String getJourneyUriTemplate;
   private final String getJourneyQuestionOutcomeUriTemplate;
 
-  public DecisionTreeService(final JourneyInstanceRepo journeyInstanceRepo,
+  public DecisionTreeService(final JourneyInstanceService journeyInstanceService,
       final JourneyRepo journeyRepo, final RestTemplateBuilder restTemplateBuilder,
       @Value("${external.decision-tree-service.url}") final String dtServiceBaseUrl,
       @Value("${external.decision-tree-service.uri-templates.get-journey}") final String getJourneyUriTemplate,
       @Value("${external.decision-tree-service.uri-templates.get-journey-question-outcome}") final String getJourneyQuestionOutcomeUriTemplate) {
 
-    this.journeyInstanceRepo = journeyInstanceRepo;
+    this.journeyInstanceService = journeyInstanceService;
     this.journeyRepo = journeyRepo;
     this.restTemplate = restTemplateBuilder.rootUri(dtServiceBaseUrl).build();
     this.getJourneyUriTemplate = getJourneyUriTemplate;
@@ -55,8 +52,8 @@ public class DecisionTreeService {
 
     log.debug("Journey from Decision Tree service: {}", dtJourney);
 
-    JourneyInstance journeyInstance =
-        createNewJourneyInstance(journeyRepo.findById(UUID.fromString(dtJourney.getUuid())).get());
+    JourneyInstance journeyInstance = journeyInstanceService
+        .createNewJourneyInstance(journeyRepo.findById(UUID.fromString(dtJourney.getUuid())).get());
 
     // TODO: Global handler for RestClientException
 
@@ -65,15 +62,11 @@ public class DecisionTreeService {
     QuestionDefinitionList questionDefinitionList = convertDTQuestionDefinitionList(
         new DTQuestionDefinitionList(Arrays.asList(dtJourney.getFirstQuestion())));
 
-    return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
-  }
+    // Update journey history with details of the first question:
+    // TODO
+    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, questionDefinitionList);
 
-  private JourneyInstance createNewJourneyInstance(final Journey journey) {
-    JourneyInstance journeyInstance = new JourneyInstance();
-    journeyInstance.setUuid(UUID.randomUUID());
-    journeyInstance.setJourney(journey);
-    journeyInstance.setStartDate(LocalDate.now());
-    return journeyInstanceRepo.saveAndFlush(journeyInstance);
+    return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
   }
 
   private QuestionDefinitionList convertDTQuestionDefinitionList(
@@ -95,7 +88,7 @@ public class DecisionTreeService {
 
     // TODO: Get history from JourneyInstance repo
     JourneyInstance journeyInstance =
-        journeyInstanceRepo.findByUuid(UUID.fromString(journeyInstanceId))
+        journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
             .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
 
     // TODO: Call DT service get question instance outcome
@@ -103,21 +96,25 @@ public class DecisionTreeService {
     uriTemplateVars.put("journey-uuid", journeyInstance.getJourney().getId().toString());
     uriTemplateVars.put("question-uuid", questionId);
 
-    // UriComponents builder = UriComponentsBuilder.fromHttpUrl(uri)
-    // .queryParam("pageSize","2")
-    // .queryParam("page","0")
-    // .queryParam("name","my_name").build();
-
-
     DTOutcome dtOutcome = restTemplate.postForEntity(getJourneyQuestionOutcomeUriTemplate,
         answeredQuestions, DTOutcome.class, uriTemplateVars).getBody();
 
     OutcomeData outcomeData = null;
     if (dtOutcome.getOutcomeType() == OutcomeType.QUESTION) {
-      outcomeData = convertDTQuestionDefinitionList((DTQuestionDefinitionList) dtOutcome.getData());
+      QuestionDefinitionList questionDefinitionList =
+          convertDTQuestionDefinitionList((DTQuestionDefinitionList) dtOutcome.getData());
+      outcomeData = questionDefinitionList;
+
+      // Update journey history with details of the next question(s)
+      journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, questionDefinitionList);
     } else if (dtOutcome.getOutcomeType() == OutcomeType.AGREEMENT) {
       outcomeData = dtOutcome.getData();
     }
+    // Otherwise it should be the SUPPORT type and the outcome data is left null
+
+    // TODO: Update the journey history
+    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions);
+
 
     return new GetJourneyQuestionOutcomeResponse(Outcome.builder()
         .outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now()).data(outcomeData).build(),
