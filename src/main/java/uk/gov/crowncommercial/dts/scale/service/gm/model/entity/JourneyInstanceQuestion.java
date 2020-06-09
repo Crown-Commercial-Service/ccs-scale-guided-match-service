@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.UUID;
 import javax.persistence.*;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -28,8 +27,7 @@ public class JourneyInstanceQuestion {
   @JoinColumn(name = "journey_instance_question_id")
   Set<JourneyInstanceAnswer> journeyInstanceAnswer;
 
-  @Column(name = "journey_question_id")
-  @Type(type = "pg-uuid")
+  @Column(columnDefinition = "uuid", name = "journey_question_id")
   UUID questionId;
 
   @Column(name = "question_order")

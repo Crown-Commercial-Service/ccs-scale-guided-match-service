@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.UUID;
 import javax.persistence.*;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -25,8 +24,7 @@ public class JourneyInstance {
   @Column(name = "journey_instance_id")
   Long id;
 
-  @Column(name = "journey_instance_uuid")
-  @Type(type = "pg-uuid")
+  @Column(columnDefinition = "uuid", name = "journey_instance_uuid")
   UUID uuid;
 
   @ManyToOne

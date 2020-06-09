@@ -40,3 +40,5 @@ server:
 external:
   decision-tree-service:    
     url: http://127.0.0.1:9000/decision-tree
+
+      

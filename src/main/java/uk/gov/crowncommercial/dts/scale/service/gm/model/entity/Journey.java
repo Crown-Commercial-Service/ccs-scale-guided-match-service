@@ -6,7 +6,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -22,8 +21,7 @@ import lombok.experimental.FieldDefaults;
 public class Journey {
 
   @Id
-  @Column(name = "journey_id")
-  @Type(type = "pg-uuid")
+  @Column(columnDefinition = "uuid", name = "journey_id")
   UUID id;
 
   @Column(name = "journey_name")

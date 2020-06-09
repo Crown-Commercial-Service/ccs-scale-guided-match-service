@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.*;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -24,8 +23,7 @@ public class JourneyInstanceAnswer {
   @Column(name = "journey_instance_answer_id")
   Long id;
 
-  @Column(name = "journey_answer_id")
-  @Type(type = "pg-uuid")
+  @Column(columnDefinition = "uuid", name = "journey_answer_id")
   UUID answerId;
 
   @Column(name = "answer_sequence")
