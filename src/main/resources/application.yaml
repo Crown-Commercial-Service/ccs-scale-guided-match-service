@@ -7,7 +7,6 @@ logging:
     org.springframework: INFO
     # org.hibernate: DEBUG
     
- 
 spring:
   jackson:
     default-property-inclusion: non-null
@@ -21,7 +20,9 @@ spring:
       ddl-auto: validate
 
 external:
-  decision-tree-service:    
+  decision-tree-service:
+    # Temporary - override from environment
+    url: http://127.0.0.1:9000/decision-tree
     uri-templates:
       get-journey: "/journeys/{journey-uuid}"
       get-journey-question-outcome: "/journeys/{journey-uuid}/questions/{question-uuid}/outcome"
@@ -30,8 +31,8 @@ external:
 spring:
   profiles: local
   datasource:
-    # Credentials via environment variables ONLY.
-    url: jdbc:postgresql://localhost:5432/postgres  
+    # Credentials via environment variables ONLY. 
+    url: jdbc:postgresql://localhost:5432/guided_match  
   
 server:
   servlet:
