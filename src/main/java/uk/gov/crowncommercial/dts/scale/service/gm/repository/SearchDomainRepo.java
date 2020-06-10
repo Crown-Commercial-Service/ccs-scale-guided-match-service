@@ -9,5 +9,5 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.SearchDomain;
  */
 @Repository
 public interface SearchDomainRepo extends JpaRepository<SearchDomain, Integer> {
-
+  /* No additional repository methods */
 }

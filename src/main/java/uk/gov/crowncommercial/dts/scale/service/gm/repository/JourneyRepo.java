@@ -10,5 +10,5 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.Journey;
  */
 @Repository
 public interface JourneyRepo extends JpaRepository<Journey, UUID> {
-
+  /* No additional repository methods */
 }

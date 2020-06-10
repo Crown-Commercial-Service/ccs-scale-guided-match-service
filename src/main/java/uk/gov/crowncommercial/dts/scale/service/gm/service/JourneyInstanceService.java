@@ -15,6 +15,7 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.JourneyInstance;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.JourneyInstanceAnswer;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.JourneyInstanceQuestion;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceRepo;
+import uk.gov.crowncommercial.dts.scale.service.gm.temp.DataLoader;
 
 /**
  *
@@ -24,13 +25,12 @@ import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceRep
 public class JourneyInstanceService {
 
   private final JourneyInstanceRepo journeyInstanceRepo;
-  // public final JourneyInstanceQuestionRepo journeyInstanceQuestionRepo;
+  private final DataLoader dataLoader;
 
   public GetJourneyHistoryResponse getJourneyHistory(final String journeyInstanceId) {
-
-    // return dataLoader.convertJsonToObject("get-journey-history/" + journeyInstanceId + ".json",
-    // GetJourneyHistoryResponse.class);
-    return null;
+    // TODO: Implement once data schema issues resolved
+    return dataLoader.convertJsonToObject("get-journey-history/" + journeyInstanceId + ".json",
+        GetJourneyHistoryResponse.class);
   }
 
   public JourneyInstance createJourneyInstance(final Journey journey,
