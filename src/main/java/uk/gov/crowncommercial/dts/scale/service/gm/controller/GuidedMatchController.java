@@ -2,6 +2,7 @@ package uk.gov.crowncommercial.dts.scale.service.gm.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class GuidedMatchController {
 
   @GetMapping("/journey-summaries/{lookup-entry-id}")
   public GetJourneySummaryResponse getJourneySummary(
-      @PathVariable("lookup-entry-id") final Integer lookupEntryId) {
+      @PathVariable("lookup-entry-id") final UUID lookupEntryId) {
 
     log.debug("getJourneySummary(lookup-entry-id: {})", lookupEntryId);
 

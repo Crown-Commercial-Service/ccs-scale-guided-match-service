@@ -1,5 +1,6 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +18,9 @@ public class SearchTermLookupService {
 
   private final SearchDomainRepo searchDomainRepo;
 
-  public GetJourneySummaryResponse getJourneySummary(final Integer lookupEntryId) {
+  public GetJourneySummaryResponse getJourneySummary(final UUID lookupEntryId) {
 
-    SearchDomain searchDomain = searchDomainRepo.findById(lookupEntryId)
+    SearchDomain searchDomain = searchDomainRepo.findByLookupEntryId(lookupEntryId)
         .orElseThrow(() -> new RuntimeException("TODO: 404 No search domain record found"));
 
     log.debug("Found SearchDomain record: {}", searchDomain.toString());
