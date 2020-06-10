@@ -1,46 +1,124 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
-import java.util.Set;
-import java.util.StringJoiner;
-import org.apache.commons.lang3.StringUtils;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.AnsweredQuestion;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.GetJourneyQuestionOutcomeResponse;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.StartJourneyResponse;
-import uk.gov.crowncommercial.dts.scale.service.gm.temp.DataLoader;
+import org.springframework.web.client.RestTemplate;
+import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.JourneyInstance;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.external.dt.DTJourney;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.external.dt.DTOutcome;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.external.dt.DTQuestionDefinitionList;
+import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyRepo;
 
 /**
  * Service component to handle interaction with the Decision Tree service
  */
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class DecisionTreeService {
 
-  private final DataLoader dataLoader;
+  private final JourneyInstanceService journeyInstanceService;
+  private final JourneyRepo journeyRepo;
 
-  public StartJourneyResponse startJourney(final String journeyId) {
+  private final RestTemplate restTemplate;
+  private final String getJourneyUriTemplate;
+  private final String getJourneyQuestionOutcomeUriTemplate;
 
-    // TODO: Create a new Journey Instance in repo..
+  public DecisionTreeService(final JourneyInstanceService journeyInstanceService,
+      final JourneyRepo journeyRepo, final RestTemplateBuilder restTemplateBuilder,
+      @Value("${external.decision-tree-service.url}") final String dtServiceBaseUrl,
+      @Value("${external.decision-tree-service.uri-templates.get-journey}") final String getJourneyUriTemplate,
+      @Value("${external.decision-tree-service.uri-templates.get-journey-question-outcome}") final String getJourneyQuestionOutcomeUriTemplate) {
 
-    return dataLoader.convertJsonToObject("start-journey/" + journeyId + ".json",
-        StartJourneyResponse.class);
+    this.journeyInstanceService = journeyInstanceService;
+    this.journeyRepo = journeyRepo;
+    this.restTemplate = restTemplateBuilder.rootUri(dtServiceBaseUrl).build();
+    this.getJourneyUriTemplate = getJourneyUriTemplate;
+    this.getJourneyQuestionOutcomeUriTemplate = getJourneyQuestionOutcomeUriTemplate;
+  }
 
+  public StartJourneyResponse startJourney(final String journeyId,
+      final JourneySelectionParameters journeySelectionParameters) {
+
+    // Start a 'session' by creating and persisting a new Journey Instance
+    DTJourney dtJourney =
+        restTemplate.getForObject(getJourneyUriTemplate, DTJourney.class, journeyId);
+
+    // TODO: 404 not foundetc
+
+    log.debug("Journey from Decision Tree service: {}", dtJourney);
+
+    JourneyInstance journeyInstance = journeyInstanceService.createJourneyInstance(
+        journeyRepo.findById(UUID.fromString(dtJourney.getUuid())).get(),
+        journeySelectionParameters.getSearchTerm());
+
+    // TODO: Global handler for RestClientException
+
+    // TODO: DT service should support question groups (multiple questions) embedded in the
+    // Journey-FirstQuestion(s)
+    QuestionDefinitionList questionDefinitionList = convertDTQuestionDefinitionList(
+        new DTQuestionDefinitionList(Arrays.asList(dtJourney.getFirstQuestion())));
+
+    // Update journey history with details of the first question:
+    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinitionList);
+
+    return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
+  }
+
+  private QuestionDefinitionList convertDTQuestionDefinitionList(
+      final DTQuestionDefinitionList dtQuestionDefinitionList) {
+
+    return new QuestionDefinitionList(
+        dtQuestionDefinitionList.stream().map(dtQuestionDefinition -> {
+          Question question =
+              new Question(dtQuestionDefinition.getUuid(), dtQuestionDefinition.getText(),
+                  dtQuestionDefinition.getHint(), dtQuestionDefinition.getType());
+
+          return new QuestionDefinition(question, null, null, null,
+              dtQuestionDefinition.getAnswerDefinitions());
+        }).collect(Collectors.toList()));
   }
 
   public GetJourneyQuestionOutcomeResponse getJourneyQuestionOutcome(final String journeyInstanceId,
       final String questionId, final Set<AnsweredQuestion> answeredQuestions) {
 
-    // First 8 digits of the answer UUIDs is sufficient
-    final StringJoiner sj = new StringJoiner(",");
-    answeredQuestions.stream().findFirst().get().getAnswers().stream()
-        .map(a -> StringUtils.substringBefore(a, "-")).sorted().forEach(sj::add);
+    // TODO: Get history from JourneyInstance repo
+    JourneyInstance journeyInstance =
+        journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
+            .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
 
-    // TODO: Get history from JourneyInstance repo?
-    String fileName = String.format("get-journey-question-outcome/%s_%s_(%s).json",
-        journeyInstanceId, questionId, sj.toString());
-    return dataLoader.convertJsonToObject(fileName, GetJourneyQuestionOutcomeResponse.class);
+    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions);
 
+    // TODO: Call DT service get question instance outcome
+    Map<String, String> uriTemplateVars = new HashMap<>();
+    uriTemplateVars.put("journey-uuid", journeyInstance.getJourney().getId().toString());
+    uriTemplateVars.put("question-uuid", questionId);
+
+    DTOutcome dtOutcome = restTemplate.postForEntity(getJourneyQuestionOutcomeUriTemplate,
+        answeredQuestions, DTOutcome.class, uriTemplateVars).getBody();
+
+    OutcomeData outcomeData = null;
+    if (dtOutcome.getOutcomeType() == OutcomeType.QUESTION) {
+      QuestionDefinitionList questionDefinitionList =
+          convertDTQuestionDefinitionList((DTQuestionDefinitionList) dtOutcome.getData());
+      outcomeData = questionDefinitionList;
+
+      // Update journey history with details of the next question(s)
+      journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance,
+          questionDefinitionList);
+    } else if (dtOutcome.getOutcomeType() == OutcomeType.AGREEMENT) {
+      outcomeData = dtOutcome.getData();
+    }
+    // Otherwise it should be the SUPPORT type and the outcome data is left null
+
+    return new GetJourneyQuestionOutcomeResponse(Outcome.builder()
+        .outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now()).data(outcomeData).build(),
+        null);
   }
 
 }

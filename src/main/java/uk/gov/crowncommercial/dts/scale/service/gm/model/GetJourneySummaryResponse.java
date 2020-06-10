@@ -1,4 +1,4 @@
-package uk.gov.crowncommercial.dts.scale.service.gm.controller.model;
+package uk.gov.crowncommercial.dts.scale.service.gm.model;
 
 import lombok.Value;
 

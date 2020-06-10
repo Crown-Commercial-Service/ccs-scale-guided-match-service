@@ -5,10 +5,41 @@ logging:
   level:
     uk.gov.crowncommercial.dts.scale: DEBUG
     org.springframework: INFO
+    # org.hibernate: DEBUG
+    
+spring:
+  jackson:
+    default-property-inclusion: non-null
+    property-naming-strategy: LOWER_CAMEL_CASE 
+    deserialization:
+      fail-on-missing-external-type-id-property: false
+  jpa:
+    database: postgresql
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
 
+external:
+  decision-tree-service:
+    # Temporary - override from environment
+    url: http://127.0.0.1:9000/decision-tree
+    uri-templates:
+      get-journey: "/journeys/{journey-uuid}"
+      get-journey-question-outcome: "/journeys/{journey-uuid}/questions/{question-uuid}/outcome"
+    
 ---
 spring:
   profiles: local
+  datasource:
+    # Credentials via environment variables ONLY. 
+    url: jdbc:postgresql://localhost:5432/guided_match  
+  
 server:
   servlet:
     context-path: /guided-match-service
+    
+external:
+  decision-tree-service:    
+    url: http://127.0.0.1:9000/decision-tree
+
+      

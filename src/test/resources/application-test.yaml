@@ -1,0 +1,14 @@
+---
+spring:
+  profiles: test
+  jpa:
+    database: h2
+    show-sql: true
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      ddl-auto: create-drop
+      
+external:
+  decision-tree-service:    
+    url: http://127.0.0.1:9000/decision-tree      

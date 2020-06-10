@@ -1,6 +1,5 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model;
 
-import java.util.Set;
 import lombok.Value;
 
 /**
@@ -10,6 +9,6 @@ import lombok.Value;
 public class StartJourneyResponse {
 
   String journeyInstanceId;
-  Set<QuestionDefinition> questions;
+  QuestionDefinitionList questions;
 
 }

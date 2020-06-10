@@ -13,6 +13,6 @@ public class QuestionDefinition {
   String pattern;
   String prePopulatedAnswerId;
   String prePopulatedAnswerSource;
-  Set<AnswerDefinition> definedAnswers;
+  Set<AnswerDefinition> answerDefinitions;
 
 }

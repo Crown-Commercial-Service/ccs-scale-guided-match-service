@@ -27,6 +27,6 @@ public enum QuestionType {
   DATE,
 
   @JsonProperty("dateRange")
-  DATE_RANGE,
+  DATE_RANGE
 
 }

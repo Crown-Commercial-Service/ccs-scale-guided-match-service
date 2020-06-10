@@ -1,6 +1,6 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model;
 
-import java.util.Set;
+import org.springframework.lang.Nullable;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Value;
 
@@ -8,10 +8,13 @@ import lombok.Value;
  *
  */
 @Value
-public class AnsweredQuestion {
+public class GivenAnswer {
 
   @JsonAlias("id")
+  @Nullable
   String uuid;
-  Set<GivenAnswer> answers;
+
+  @Nullable
+  String value;
 
 }

@@ -2,13 +2,13 @@ package uk.gov.crowncommercial.dts.scale.service.gm.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.crowncommercial.dts.scale.service.gm.controller.model.GetJourneySummaryResponse;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
-import uk.gov.crowncommercial.dts.scale.service.gm.service.GuidedMatchHistoryService;
+import uk.gov.crowncommercial.dts.scale.service.gm.service.JourneyInstanceService;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.SearchTermLookupService;
 
 /**
@@ -23,11 +23,11 @@ public class GuidedMatchController {
 
   private final SearchTermLookupService searchTermLookupService;
   private final DecisionTreeService decisionTreeService;
-  private final GuidedMatchHistoryService guidedMatchHistoryService;
+  private final JourneyInstanceService guidedMatchHistoryService;
 
   @GetMapping("/journey-summaries/{lookup-entry-id}")
   public GetJourneySummaryResponse getJourneySummary(
-      @PathVariable("lookup-entry-id") final String lookupEntryId) {
+      @PathVariable("lookup-entry-id") final UUID lookupEntryId) {
 
     log.debug("getJourneySummary(lookup-entry-id: {})", lookupEntryId);
 
@@ -41,7 +41,7 @@ public class GuidedMatchController {
     log.debug("startJourney(journey-id: {}, journeySelectionParameters: {})", journeyId,
         journeySelectionParameters);
 
-    return decisionTreeService.startJourney(journeyId);
+    return decisionTreeService.startJourney(journeyId, journeySelectionParameters);
   }
 
   @PostMapping(path = "/journey-instances/{journey-instance-id}/questions/{question-id}",
