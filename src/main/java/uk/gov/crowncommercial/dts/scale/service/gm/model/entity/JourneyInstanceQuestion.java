@@ -30,7 +30,7 @@ public class JourneyInstanceQuestion {
 
   @OneToMany(cascade = CascadeType.ALL)
   @JoinColumn(name = "journey_instance_question_id")
-  Set<JourneyInstanceAnswer> journeyInstanceAnswers;
+  Set<JourneyInstanceAnswer> journeyInstanceAnswers = new HashSet<>();
 
   @Column(columnDefinition = "uuid", name = "journey_question_id")
   UUID uuid;
@@ -48,11 +48,11 @@ public class JourneyInstanceQuestion {
   @Column(name = "question_type")
   QuestionType type;
 
-  public Set<JourneyInstanceAnswer> getJourneyInstanceAnswers() {
-    if (journeyInstanceAnswers == null) {
-      journeyInstanceAnswers = new HashSet<>();
-    }
-    return journeyInstanceAnswers;
-  }
+  // public Set<JourneyInstanceAnswer> getJourneyInstanceAnswers() {
+  // if (journeyInstanceAnswers == null) {
+  // journeyInstanceAnswers = new HashSet<>();
+  // }
+  // return journeyInstanceAnswers;
+  // }
 
 }

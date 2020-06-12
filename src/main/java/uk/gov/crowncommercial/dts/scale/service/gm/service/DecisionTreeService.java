@@ -113,6 +113,8 @@ public class DecisionTreeService {
           questionDefinitionList);
     } else if (dtOutcome.getOutcomeType() == OutcomeType.AGREEMENT) {
       outcomeData = dtOutcome.getData();
+    } else if (dtOutcome.getOutcomeType() == OutcomeType.SUPPORT) {
+
     }
     // Otherwise it should be the SUPPORT type and the outcome data is left null
 
