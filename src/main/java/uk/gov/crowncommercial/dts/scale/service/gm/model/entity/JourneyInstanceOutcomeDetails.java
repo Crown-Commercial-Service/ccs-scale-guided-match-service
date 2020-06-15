@@ -1,17 +1,17 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model.entity;
 
 import javax.persistence.*;
-import org.hibernate.annotations.Immutable;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 
 /**
  *
  */
 @Entity
-@Immutable
 @Data
+@EqualsAndHashCode(exclude = "journeyInstance")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "journey_instance_outcome_details")
 public class JourneyInstanceOutcomeDetails {
@@ -21,8 +21,9 @@ public class JourneyInstanceOutcomeDetails {
   @Column(name = "journey_instance_outcome_detail_id")
   Long id;
 
-  @Column(name = "journey_instance_id")
-  Long journeyInstanceId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "journey_instance_id")
+  JourneyInstance journeyInstance;
 
   @Column(name = "agreement_number")
   String agreementNumber;

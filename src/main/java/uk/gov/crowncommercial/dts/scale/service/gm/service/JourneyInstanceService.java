@@ -1,7 +1,6 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -59,9 +58,10 @@ public class JourneyInstanceService {
       aq.getAnswers().stream().forEach(a -> {
         JourneyInstanceAnswer jia = new JourneyInstanceAnswer();
         jia.setJourneyInstanceQuestionId(journeyInstanceQuestion.getId());
-        jia.setAnswerDate(LocalDate.now());
         jia.setAnswerId(UUID.fromString(a.getUuid()));
         jia.setAnswerText(a.getValue());
+
+        // TODO: Capture date/number value answers into separate fields or remove those columns
         journeyInstanceQuestion.getJourneyInstanceAnswers().add(jia);
       });
 
@@ -88,36 +88,38 @@ public class JourneyInstanceService {
 
   public void updateJourneyInstanceOutcome(final JourneyInstance journeyInstance,
       final OutcomeType outcomeType, final Optional<OutcomeData> outcomeData) {
+
     journeyInstance.setEndDateTime(LocalDateTime.now(clock));
     journeyInstance.setOutcomeType(outcomeType);
+    journeyInstance.clearJourneyInstanceOutcomeDetails();
+
+    final JourneyInstance updatedJourneyInstance =
+        journeyInstanceRepo.saveAndFlush(journeyInstance);
 
     if (outcomeType == OutcomeType.AGREEMENT) {
       AgreementList agreementList = (AgreementList) outcomeData
           .orElseThrow(() -> new RuntimeException("TODO: 500 Agreement outcome without agreement"));
 
-      Set<JourneyInstanceOutcomeDetails> jiods = journeyInstance.getJourneyInstanceOutcomeDetails();
-
       agreementList.stream().forEach(agreement -> {
 
         if (agreement.getLots().isEmpty()) {
-          jiods.add(createJourneyInstanceOutcomeDetails(journeyInstance.getId(),
-              agreement.getNumber(), Optional.empty()));
+          updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
+              createJourneyInstanceOutcomeDetails(agreement.getNumber(), Optional.empty()));
         } else {
           agreement.getLots().stream().forEach(lot -> {
-            jiods.add(createJourneyInstanceOutcomeDetails(journeyInstance.getId(),
-                agreement.getNumber(), Optional.of(lot.getNumber())));
+            updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
+                createJourneyInstanceOutcomeDetails(agreement.getNumber(),
+                    Optional.of(lot.getNumber())));
           });
         }
       });
     }
-    journeyInstanceRepo.saveAndFlush(journeyInstance);
+    journeyInstanceRepo.saveAndFlush(updatedJourneyInstance);
   }
 
   private JourneyInstanceOutcomeDetails createJourneyInstanceOutcomeDetails(
-      final Long journeyInstanceId, final String agreementNumber,
-      final Optional<String> lotNumber) {
+      final String agreementNumber, final Optional<String> lotNumber) {
     JourneyInstanceOutcomeDetails jiod = new JourneyInstanceOutcomeDetails();
-    jiod.setJourneyInstanceId(journeyInstanceId);
     jiod.setAgreementNumber(agreementNumber);
     if (lotNumber.isPresent()) {
       jiod.setLotNumber(lotNumber.get());

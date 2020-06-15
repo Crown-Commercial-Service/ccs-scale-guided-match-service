@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import javax.persistence.*;
-import org.hibernate.annotations.Immutable;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -15,7 +14,6 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType;
  *
  */
 @Entity
-@Immutable
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "journey_instances")
@@ -43,8 +41,7 @@ public class JourneyInstance {
   @Column(name = "start_datetime")
   LocalDateTime startDateTime;
 
-  @OneToMany(cascade = CascadeType.ALL)
-  @JoinColumn(name = "journey_instance_id")
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "journeyInstance")
   Set<JourneyInstanceOutcomeDetails> journeyInstanceOutcomeDetails = new HashSet<>();
 
   @Column(name = "end_datetime")
@@ -54,11 +51,14 @@ public class JourneyInstance {
   @Column(name = "outcome_type")
   OutcomeType outcomeType;
 
-  // public Set<JourneyInstanceQuestion> getJourneyInstanceQuestions() {
-  // if (journeyInstanceQuestions == null) {
-  // journeyInstanceQuestions = new HashSet<>();
-  // }
-  // return journeyInstanceQuestions;
-  // }
+  public void addJourneyInstanceOutcomeDetails(final JourneyInstanceOutcomeDetails joid) {
+    journeyInstanceOutcomeDetails.add(joid);
+    joid.setJourneyInstance(this);
+  }
+
+  public void clearJourneyInstanceOutcomeDetails() {
+    journeyInstanceOutcomeDetails.stream().forEach(jiod -> jiod.setJourneyInstance(null));
+    journeyInstanceOutcomeDetails.clear();
+  }
 
 }

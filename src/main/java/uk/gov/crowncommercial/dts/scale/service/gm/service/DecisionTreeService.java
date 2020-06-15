@@ -1,5 +1,8 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
+import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.AGREEMENT;
+import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.QUESTION;
+import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.SUPPORT;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -103,7 +106,7 @@ public class DecisionTreeService {
         answeredQuestions, DTOutcome.class, uriTemplateVars).getBody();
 
     OutcomeData outcomeData = null;
-    if (dtOutcome.getOutcomeType() == OutcomeType.QUESTION) {
+    if (dtOutcome.getOutcomeType() == QUESTION) {
       QuestionDefinitionList questionDefinitionList =
           convertDTQuestionDefinitionList((DTQuestionDefinitionList) dtOutcome.getData());
       outcomeData = questionDefinitionList;
@@ -111,12 +114,14 @@ public class DecisionTreeService {
       // Update journey history with details of the next question(s)
       journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance,
           questionDefinitionList);
-    } else if (dtOutcome.getOutcomeType() == OutcomeType.AGREEMENT) {
+    } else if (dtOutcome.getOutcomeType() == AGREEMENT) {
       outcomeData = dtOutcome.getData();
-    } else if (dtOutcome.getOutcomeType() == OutcomeType.SUPPORT) {
-
+      journeyInstanceService.updateJourneyInstanceOutcome(journeyInstance, AGREEMENT,
+          Optional.of(outcomeData));
+    } else if (dtOutcome.getOutcomeType() == SUPPORT) {
+      journeyInstanceService.updateJourneyInstanceOutcome(journeyInstance, SUPPORT,
+          Optional.empty());
     }
-    // Otherwise it should be the SUPPORT type and the outcome data is left null
 
     return new GetJourneyQuestionOutcomeResponse(Outcome.builder()
         .outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now()).data(outcomeData).build(),
