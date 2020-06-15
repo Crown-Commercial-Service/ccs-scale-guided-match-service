@@ -34,8 +34,7 @@ public class JourneyInstance {
   @Column(name = "original_search_term")
   String originalSearchTerm;
 
-  @OneToMany(cascade = CascadeType.ALL)
-  @JoinColumn(name = "journey_instance_id")
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "journeyInstance")
   Set<JourneyInstanceQuestion> journeyInstanceQuestions = new HashSet<>();
 
   @Column(name = "start_datetime")
@@ -59,6 +58,11 @@ public class JourneyInstance {
   public void clearJourneyInstanceOutcomeDetails() {
     journeyInstanceOutcomeDetails.stream().forEach(jiod -> jiod.setJourneyInstance(null));
     journeyInstanceOutcomeDetails.clear();
+  }
+
+  public void addJourneyInstanceQuestion(final JourneyInstanceQuestion jiq) {
+    journeyInstanceQuestions.add(jiq);
+    jiq.setJourneyInstance(this);
   }
 
 }

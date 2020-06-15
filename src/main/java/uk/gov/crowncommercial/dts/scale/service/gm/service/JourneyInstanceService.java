@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.*;
+import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceQuestionRepo;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceRepo;
 import uk.gov.crowncommercial.dts.scale.service.gm.temp.DataLoader;
 
@@ -20,6 +21,7 @@ import uk.gov.crowncommercial.dts.scale.service.gm.temp.DataLoader;
 public class JourneyInstanceService {
 
   private final JourneyInstanceRepo journeyInstanceRepo;
+  private final JourneyInstanceQuestionRepo journeyInstanceQuestionRepo;
   private final DataLoader dataLoader;
   private final Clock clock;
 
@@ -69,19 +71,50 @@ public class JourneyInstanceService {
     journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
 
-  public void updateJourneyInstanceQuestions(final JourneyInstance journeyInstance,
+  /**
+   * For MVP, we are recording a single linear journey only, so when a client returns to a previous
+   * question (or the start of the journey) we must overwrite any question history from that point
+   * on.
+   *
+   * @param journeyInstance
+   * @param questionDefinitionList
+   */
+  public void updateJourneyInstanceQuestions(JourneyInstance journeyInstance,
       final QuestionDefinitionList questionDefinitionList) {
 
-    questionDefinitionList.stream().map(QuestionDefinition::getQuestion).forEach(q -> {
-      JourneyInstanceQuestion jiq = new JourneyInstanceQuestion();
-      jiq.setUuid(UUID.fromString(q.getId()));
-      jiq.setJourneyInstanceId(journeyInstance.getId());
-      jiq.setText(q.getText());
-      jiq.setHint(q.getHint());
-      jiq.setType(q.getType());
-      jiq.setOrder((short) 1);
-      journeyInstance.getJourneyInstanceQuestions().add(jiq);
-    });
+    // TODO: Post-MVP: Deal with question groups (the whole collection)
+    final Question questionInstance =
+        questionDefinitionList.stream().findFirst().get().getQuestion();
+
+    // Delete all instances from repo with >= order than the current instance..
+    Optional<JourneyInstanceQuestion> currentJiq = journeyInstanceQuestionRepo
+        .findByJourneyInstanceAndUuid(journeyInstance, UUID.fromString(questionInstance.getId()));
+    if (currentJiq.isPresent()) {
+
+      journeyInstanceQuestionRepo.deleteByJourneyInstanceAndOrder(journeyInstance,
+          currentJiq.get().getOrder());
+      journeyInstanceQuestionRepo.flush();
+      journeyInstance = journeyInstanceRepo.findById(journeyInstance.getId()).get();
+    }
+
+    // Find the JIQ that now has the highest order and +1 to it.
+    Optional<JourneyInstanceQuestion> jiqHighestOrder =
+        journeyInstanceQuestionRepo.findTopByJourneyInstanceOrderByOrderDesc(journeyInstance);
+
+    final short order;
+    if (jiqHighestOrder.isPresent()) {
+      order = (short) (jiqHighestOrder.get().getOrder() + 1);
+    } else {
+      order = 1;
+    }
+
+    JourneyInstanceQuestion jiq = new JourneyInstanceQuestion();
+    jiq.setUuid(UUID.fromString(questionInstance.getId()));
+    jiq.setText(questionInstance.getText());
+    jiq.setHint(questionInstance.getHint());
+    jiq.setType(questionInstance.getType());
+    jiq.setOrder(order);
+    journeyInstance.addJourneyInstanceQuestion(jiq);
 
     journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
