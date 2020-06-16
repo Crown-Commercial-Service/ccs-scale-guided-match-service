@@ -120,7 +120,13 @@ public class DecisionTreeService {
         journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
             .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
 
-    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions);
+    QuestionDefinition answeredQuestionDefinition =
+        convertDTQuestionDefinitionList(restTemplate.getForObject(getJourneyQuestionUriTemplate,
+            DTQuestionDefinitionList.class, journeyInstance.getJourney().getId(), questionId))
+                .get(0);
+
+    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions,
+        answeredQuestionDefinition);
 
     // TODO: Call DT service get question instance outcome
     Map<String, String> uriTemplateVars = new HashMap<>();

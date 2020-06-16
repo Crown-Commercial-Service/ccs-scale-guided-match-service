@@ -1,5 +1,6 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.*;
@@ -38,9 +39,12 @@ public class JourneyInstanceAnswer {
   @Column(name = "answer_text")
   String answerText;
 
-  @Column(name = "answer_date")
-  LocalDate answerDate;
+  @Column(name = "value_number")
+  BigDecimal valueNumber;
 
-  @Column(name = "answer_number", columnDefinition = "NUMERIC", length = 20, precision = 4)
-  Double answerNumber;
+  @Column(name = "value_text")
+  String valueText;
+
+  @Column(name = "value_date")
+  LocalDate valueDate;
 }

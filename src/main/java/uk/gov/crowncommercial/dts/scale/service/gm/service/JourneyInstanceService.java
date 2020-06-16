@@ -1,9 +1,11 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.*;
 import javax.transaction.Transactional;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +51,8 @@ public class JourneyInstanceService {
   }
 
   public void updateJourneyInstanceAnswers(final JourneyInstance journeyInstance,
-      final Set<AnsweredQuestion> answeredQuestions) {
+      final Set<AnsweredQuestion> answeredQuestions,
+      final QuestionDefinition answeredQuestionDefinition) {
 
     answeredQuestions.stream().forEach(aq -> {
 
@@ -60,8 +63,12 @@ public class JourneyInstanceService {
 
       aq.getAnswers().stream().forEach(a -> {
         JourneyInstanceAnswer jia = new JourneyInstanceAnswer();
+        jia.setAnswerText(answeredQuestionDefinition.getAnswerDefinitions().stream()
+            .filter(ad -> ad.getId().equals(a.getUuid())).findFirst().get().getText());
         jia.setAnswerId(UUID.fromString(a.getUuid()));
-        jia.setAnswerText(a.getValue());
+        if (NumberUtils.isCreatable(a.getValue())) {
+          jia.setValueNumber(new BigDecimal(a.getValue()));
+        }
 
         // TODO: Capture date/number value answers into separate fields or remove those columns
         journeyInstanceQuestion.addJourneyInstanceAnswer(jia);
@@ -170,15 +177,22 @@ public class JourneyInstanceService {
     final Set<QuestionHistory> questionHistory = Collections.synchronizedSet(new HashSet<>());
 
     if (!journeyInstance.getJourneyInstanceQuestions().isEmpty()) {
-      journeyInstance.getJourneyInstanceQuestions().stream().forEach(jiq -> {
-        Question question =
-            new Question(jiq.getUuid().toString(), jiq.getText(), jiq.getHint(), jiq.getType());
-        Set<AnswerHistory> answers = new HashSet<>();
-        jiq.getJourneyInstanceAnswers().stream().forEach(jia -> {
-          answers.add(new AnswerHistory(jia.getAnswerId().toString(), jia.getAnswerText()));
-        });
-        questionHistory.add(new QuestionHistory(question, answers, ""));
-      });
+      journeyInstance.getJourneyInstanceQuestions().stream()
+          .sorted(Comparator.comparing(JourneyInstanceQuestion::getOrder))
+          .filter(jiq -> !jiq.getJourneyInstanceAnswers().isEmpty()).forEach(jiq -> {
+            Question question =
+                new Question(jiq.getUuid().toString(), jiq.getText(), jiq.getHint(), jiq.getType());
+            Set<AnswerHistory> answers = new HashSet<>();
+            jiq.getJourneyInstanceAnswers().stream().forEach(jia -> {
+
+              String answerHistoryValue = jia.getValueNumber() != null
+                  ? jia.getValueNumber().toString() : jia.getAnswerId().toString();
+
+              answers.add(new AnswerHistory(jia.getAnswerText(), answerHistoryValue));
+
+            });
+            questionHistory.add(new QuestionHistory(question, answers, ""));
+          });
     }
     return questionHistory;
   }
