@@ -112,8 +112,8 @@ public class DecisionTreeService {
         }).collect(Collectors.toList()));
   }
 
-  public GetJourneyQuestionOutcomeResponse getJourneyQuestionOutcome(final String journeyInstanceId,
-      final String questionId, final Set<AnsweredQuestion> answeredQuestions) {
+  public Outcome getJourneyQuestionOutcome(final String journeyInstanceId, final String questionId,
+      final Set<AnsweredQuestion> answeredQuestions) {
 
     // TODO: Get history from JourneyInstance repo
     JourneyInstance journeyInstance =
@@ -148,9 +148,8 @@ public class DecisionTreeService {
           Optional.empty());
     }
 
-    return new GetJourneyQuestionOutcomeResponse(Outcome.builder()
-        .outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now()).data(outcomeData).build(),
-        null);
+    return Outcome.builder().outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now())
+        .data(outcomeData).build();
   }
 
 }

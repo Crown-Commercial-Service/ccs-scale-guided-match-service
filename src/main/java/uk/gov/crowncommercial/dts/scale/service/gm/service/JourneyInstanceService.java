@@ -2,10 +2,7 @@ package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import javax.persistence.EntityManager;
+import java.util.*;
 import javax.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +25,6 @@ public class JourneyInstanceService {
   private final JourneyInstanceQuestionRepo journeyInstanceQuestionRepo;
   private final DataLoader dataLoader;
   private final Clock clock;
-  private final EntityManager entityManager;
 
   public GetJourneyHistoryResponse getJourneyHistory(final String journeyInstanceId) {
     // TODO: Implement once data schema issues resolved
@@ -123,7 +119,7 @@ public class JourneyInstanceService {
     jiq.setOrder(order);
     journeyInstance.addJourneyInstanceQuestion(jiq);
 
-    // journeyInstanceRepo.saveAndFlush(journeyInstance);
+    journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
 
   public void updateJourneyInstanceOutcome(final JourneyInstance journeyInstance,
@@ -165,6 +161,26 @@ public class JourneyInstanceService {
       jiod.setLotNumber(lotNumber.get());
     }
     return jiod;
+  }
+
+  public Set<QuestionHistory> getQuestionHistory(final String journeyInstanceId) {
+    JourneyInstance journeyInstance = findByUuid(UUID.fromString(journeyInstanceId))
+        .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
+
+    final Set<QuestionHistory> questionHistory = Collections.synchronizedSet(new HashSet<>());
+
+    if (!journeyInstance.getJourneyInstanceQuestions().isEmpty()) {
+      journeyInstance.getJourneyInstanceQuestions().stream().forEach(jiq -> {
+        Question question =
+            new Question(jiq.getUuid().toString(), jiq.getText(), jiq.getHint(), jiq.getType());
+        Set<AnswerHistory> answers = new HashSet<>();
+        jiq.getJourneyInstanceAnswers().stream().forEach(jia -> {
+          answers.add(new AnswerHistory(jia.getAnswerId().toString(), jia.getAnswerText()));
+        });
+        questionHistory.add(new QuestionHistory(question, answers, ""));
+      });
+    }
+    return questionHistory;
   }
 
 }

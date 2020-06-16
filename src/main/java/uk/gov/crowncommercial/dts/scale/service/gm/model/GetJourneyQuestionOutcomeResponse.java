@@ -1,6 +1,6 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model;
 
-import java.util.List;
+import java.util.Set;
 import lombok.Value;
 
 /**
@@ -10,6 +10,6 @@ import lombok.Value;
 public class GetJourneyQuestionOutcomeResponse {
 
   Outcome outcome;
-  List<QuestionHistory> journeyHistory;
+  Set<QuestionHistory> journeyHistory;
 
 }
