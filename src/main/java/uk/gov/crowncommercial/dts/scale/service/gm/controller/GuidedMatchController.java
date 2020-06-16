@@ -59,6 +59,17 @@ public class GuidedMatchController {
         answeredQuestions);
   }
 
+  @GetMapping(path = "/journey-instances/{journey-instance-id}/questions/{question-id}")
+  public QuestionDefinitionList getJourneyQuestion(
+      @PathVariable("journey-instance-id") final String journeyInstanceId,
+      @PathVariable("question-id") final String questionId) {
+
+    log.debug("getJourneyQuestion(journey-instance-id: {}, question-id: {})", journeyInstanceId,
+        questionId);
+
+    return decisionTreeService.getJourneyQuestion(journeyInstanceId, questionId);
+  }
+
   @GetMapping("/journey-instances/{journey-instance-id}")
   public GetJourneyHistoryResponse getJourneyHistory(
       @PathVariable("journey-instance-id") final String journeyInstanceId) {

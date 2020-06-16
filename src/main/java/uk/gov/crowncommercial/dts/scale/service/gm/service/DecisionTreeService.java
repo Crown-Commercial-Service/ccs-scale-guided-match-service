@@ -31,18 +31,21 @@ public class DecisionTreeService {
   private final RestTemplate restTemplate;
   private final String getJourneyUriTemplate;
   private final String getJourneyQuestionOutcomeUriTemplate;
+  private final String getJourneyQuestionUriTemplate;
 
   public DecisionTreeService(final JourneyInstanceService journeyInstanceService,
       final JourneyRepo journeyRepo, final RestTemplateBuilder restTemplateBuilder,
       @Value("${external.decision-tree-service.url}") final String dtServiceBaseUrl,
       @Value("${external.decision-tree-service.uri-templates.get-journey}") final String getJourneyUriTemplate,
-      @Value("${external.decision-tree-service.uri-templates.get-journey-question-outcome}") final String getJourneyQuestionOutcomeUriTemplate) {
+      @Value("${external.decision-tree-service.uri-templates.get-journey-question-outcome}") final String getJourneyQuestionOutcomeUriTemplate,
+      @Value("${external.decision-tree-service.uri-templates.get-journey-question}") final String getJourneyQuestionUriTemplate) {
 
     this.journeyInstanceService = journeyInstanceService;
     this.journeyRepo = journeyRepo;
     this.restTemplate = restTemplateBuilder.rootUri(dtServiceBaseUrl).build();
     this.getJourneyUriTemplate = getJourneyUriTemplate;
     this.getJourneyQuestionOutcomeUriTemplate = getJourneyQuestionOutcomeUriTemplate;
+    this.getJourneyQuestionUriTemplate = getJourneyQuestionUriTemplate;
   }
 
   public StartJourneyResponse startJourney(final String journeyId,
@@ -71,6 +74,28 @@ public class DecisionTreeService {
     journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinitionList);
 
     return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
+  }
+
+  /**
+   * Used in navigation (i.e. back to previous questions)
+   *
+   * @param journeyInstanceId
+   * @param questionId
+   * @return the requested question definition (list)
+   */
+  public QuestionDefinitionList getJourneyQuestion(final String journeyInstanceId,
+      final String questionId) {
+    JourneyInstance journeyInstance =
+        journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
+            .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
+
+    QuestionDefinitionList questionDefinitionList =
+        convertDTQuestionDefinitionList(restTemplate.getForObject(getJourneyQuestionUriTemplate,
+            DTQuestionDefinitionList.class, journeyInstance.getJourney().getId(), questionId));
+
+    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinitionList);
+
+    return questionDefinitionList;
   }
 
   private QuestionDefinitionList convertDTQuestionDefinitionList(

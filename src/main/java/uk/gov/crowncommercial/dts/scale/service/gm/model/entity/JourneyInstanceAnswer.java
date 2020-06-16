@@ -3,17 +3,19 @@ package uk.gov.crowncommercial.dts.scale.service.gm.model.entity;
 import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.*;
-import org.hibernate.annotations.Immutable;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 /**
  *
  */
 @Entity
-@Immutable
 @Data
+@EqualsAndHashCode(exclude = "journeyInstanceQuestion")
+@ToString(exclude = "journeyInstanceQuestion")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "journey_instance_answers")
 public class JourneyInstanceAnswer {
@@ -23,8 +25,9 @@ public class JourneyInstanceAnswer {
   @Column(name = "journey_instance_answer_id")
   Long id;
 
-  @Column(name = "journey_instance_question_id")
-  Long journeyInstanceQuestionId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "journey_instance_question_id")
+  JourneyInstanceQuestion journeyInstanceQuestion;
 
   @Column(columnDefinition = "uuid", name = "journey_answer_id")
   UUID answerId;

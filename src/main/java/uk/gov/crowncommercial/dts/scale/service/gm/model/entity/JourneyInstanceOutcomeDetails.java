@@ -4,6 +4,7 @@ import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -12,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Entity
 @Data
 @EqualsAndHashCode(exclude = "journeyInstance")
+@ToString(exclude = "journeyInstance")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "journey_instance_outcome_details")
 public class JourneyInstanceOutcomeDetails {

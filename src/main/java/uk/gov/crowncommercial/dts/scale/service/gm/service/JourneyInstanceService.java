@@ -5,8 +5,11 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceQuestionRepo;
@@ -18,12 +21,14 @@ import uk.gov.crowncommercial.dts.scale.service.gm.temp.DataLoader;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JourneyInstanceService {
 
   private final JourneyInstanceRepo journeyInstanceRepo;
   private final JourneyInstanceQuestionRepo journeyInstanceQuestionRepo;
   private final DataLoader dataLoader;
   private final Clock clock;
+  private final EntityManager entityManager;
 
   public GetJourneyHistoryResponse getJourneyHistory(final String journeyInstanceId) {
     // TODO: Implement once data schema issues resolved
@@ -59,12 +64,11 @@ public class JourneyInstanceService {
 
       aq.getAnswers().stream().forEach(a -> {
         JourneyInstanceAnswer jia = new JourneyInstanceAnswer();
-        jia.setJourneyInstanceQuestionId(journeyInstanceQuestion.getId());
         jia.setAnswerId(UUID.fromString(a.getUuid()));
         jia.setAnswerText(a.getValue());
 
         // TODO: Capture date/number value answers into separate fields or remove those columns
-        journeyInstanceQuestion.getJourneyInstanceAnswers().add(jia);
+        journeyInstanceQuestion.addJourneyInstanceAnswer(jia);
       });
 
     });
@@ -79,7 +83,8 @@ public class JourneyInstanceService {
    * @param journeyInstance
    * @param questionDefinitionList
    */
-  public void updateJourneyInstanceQuestions(JourneyInstance journeyInstance,
+  @Transactional
+  public void updateJourneyInstanceQuestions(final JourneyInstance journeyInstance,
       final QuestionDefinitionList questionDefinitionList) {
 
     // TODO: Post-MVP: Deal with question groups (the whole collection)
@@ -89,12 +94,14 @@ public class JourneyInstanceService {
     // Delete all instances from repo with >= order than the current instance..
     Optional<JourneyInstanceQuestion> currentJiq = journeyInstanceQuestionRepo
         .findByJourneyInstanceAndUuid(journeyInstance, UUID.fromString(questionInstance.getId()));
-    if (currentJiq.isPresent()) {
 
-      journeyInstanceQuestionRepo.deleteByJourneyInstanceAndOrder(journeyInstance,
+    log.debug("Current JIQ: {}", currentJiq);
+
+    if (currentJiq.isPresent()) {
+      log.debug("About to delete JIQs by JourneyInstance and >= order: {}",
           currentJiq.get().getOrder());
-      journeyInstanceQuestionRepo.flush();
-      journeyInstance = journeyInstanceRepo.findById(journeyInstance.getId()).get();
+      journeyInstanceQuestionRepo.deleteByJourneyInstanceAndOrderIsGreaterThanEqual(journeyInstance,
+          currentJiq.get().getOrder());
     }
 
     // Find the JIQ that now has the highest order and +1 to it.
@@ -116,7 +123,7 @@ public class JourneyInstanceService {
     jiq.setOrder(order);
     journeyInstance.addJourneyInstanceQuestion(jiq);
 
-    journeyInstanceRepo.saveAndFlush(journeyInstance);
+    // journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
 
   public void updateJourneyInstanceOutcome(final JourneyInstance journeyInstance,
