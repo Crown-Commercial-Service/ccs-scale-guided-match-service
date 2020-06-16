@@ -28,7 +28,5 @@ public class Journey {
   String name;
 
   Boolean published;
-  // String description;
-  // UUID parentId;
 
 }

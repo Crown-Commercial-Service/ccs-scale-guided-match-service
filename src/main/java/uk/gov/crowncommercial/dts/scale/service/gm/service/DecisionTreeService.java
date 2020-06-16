@@ -60,13 +60,11 @@ public class DecisionTreeService {
     log.debug("Journey from Decision Tree service: {}", dtJourney);
 
     JourneyInstance journeyInstance = journeyInstanceService.createJourneyInstance(
-        journeyRepo.findById(UUID.fromString(dtJourney.getUuid())).get(),
+        journeyRepo.findById(UUID.fromString(dtJourney.getUuid()))
+            .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found")),
         journeySelectionParameters.getSearchTerm());
 
-    // TODO: Global handler for RestClientException
-
-    // TODO: DT service should support question groups (multiple questions) embedded in the
-    // Journey-FirstQuestion(s)
+    // TODO: post-MVP: DT service should support question groups (multiple questions)
     QuestionDefinitionList questionDefinitionList = convertDTQuestionDefinitionList(
         new DTQuestionDefinitionList(Arrays.asList(dtJourney.getFirstQuestion())));
 
@@ -115,7 +113,6 @@ public class DecisionTreeService {
   public Outcome getJourneyQuestionOutcome(final String journeyInstanceId, final String questionId,
       final Set<AnsweredQuestion> answeredQuestions) {
 
-    // TODO: Get history from JourneyInstance repo
     JourneyInstance journeyInstance =
         journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
             .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
@@ -128,7 +125,6 @@ public class DecisionTreeService {
     journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions,
         answeredQuestionDefinition);
 
-    // TODO: Call DT service get question instance outcome
     Map<String, String> uriTemplateVars = new HashMap<>();
     uriTemplateVars.put("journey-uuid", journeyInstance.getJourney().getId().toString());
     uriTemplateVars.put("question-uuid", questionId);

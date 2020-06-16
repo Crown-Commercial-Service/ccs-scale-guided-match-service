@@ -3,6 +3,7 @@ package uk.gov.crowncommercial.dts.scale.service.gm.service;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import javax.transaction.Transactional;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -13,7 +14,6 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceQuestionRepo;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceRepo;
-import uk.gov.crowncommercial.dts.scale.service.gm.temp.DataLoader;
 
 /**
  *
@@ -25,13 +25,22 @@ public class JourneyInstanceService {
 
   private final JourneyInstanceRepo journeyInstanceRepo;
   private final JourneyInstanceQuestionRepo journeyInstanceQuestionRepo;
-  private final DataLoader dataLoader;
   private final Clock clock;
 
   public GetJourneyHistoryResponse getJourneyHistory(final String journeyInstanceId) {
-    // TODO: Implement once data schema issues resolved
-    return dataLoader.convertJsonToObject("get-journey-history/" + journeyInstanceId + ".json",
-        GetJourneyHistoryResponse.class);
+
+    JourneyInstance journeyInstance = findByUuid(UUID.fromString(journeyInstanceId))
+        .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
+
+    OutcomeData outcomeData;
+    if (journeyInstance.getOutcomeType() == OutcomeType.AGREEMENT) {
+      // TODO TOMORROW! outcomeData = new AgreementList()
+    }
+
+    return new GetJourneyHistoryResponse(journeyInstance.getOriginalSearchTerm(), null,
+        Outcome.builder().outcomeType(journeyInstance.getOutcomeType()).data(null)
+            .timestamp(journeyInstance.getEndDateTime().toInstant(ZoneOffset.UTC)).build(),
+        getQuestionHistory(journeyInstance));
   }
 
   public JourneyInstance createJourneyInstance(final Journey journey,
@@ -69,8 +78,6 @@ public class JourneyInstanceService {
         if (NumberUtils.isCreatable(a.getValue())) {
           jia.setValueNumber(new BigDecimal(a.getValue()));
         }
-
-        // TODO: Capture date/number value answers into separate fields or remove those columns
         journeyInstanceQuestion.addJourneyInstanceAnswer(jia);
       });
 
@@ -90,7 +97,7 @@ public class JourneyInstanceService {
   public void updateJourneyInstanceQuestions(final JourneyInstance journeyInstance,
       final QuestionDefinitionList questionDefinitionList) {
 
-    // TODO: Post-MVP: Deal with question groups (the whole collection)
+    // TODO: post-MVP: Deal with question groups (the whole collection)
     final Question questionInstance =
         questionDefinitionList.stream().findFirst().get().getQuestion();
 
@@ -149,11 +156,10 @@ public class JourneyInstanceService {
           updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
               createJourneyInstanceOutcomeDetails(agreement.getNumber(), Optional.empty()));
         } else {
-          agreement.getLots().stream().forEach(lot -> {
-            updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
-                createJourneyInstanceOutcomeDetails(agreement.getNumber(),
-                    Optional.of(lot.getNumber())));
-          });
+          agreement.getLots().stream()
+              .forEach(lot -> updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
+                  createJourneyInstanceOutcomeDetails(agreement.getNumber(),
+                      Optional.of(lot.getNumber()))));
         }
       });
     }
@@ -174,7 +180,11 @@ public class JourneyInstanceService {
     JourneyInstance journeyInstance = findByUuid(UUID.fromString(journeyInstanceId))
         .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
 
-    final Set<QuestionHistory> questionHistory = Collections.synchronizedSet(new HashSet<>());
+    return getQuestionHistory(journeyInstance);
+  }
+
+  public Set<QuestionHistory> getQuestionHistory(final JourneyInstance journeyInstance) {
+    final Set<QuestionHistory> questionHistory = new LinkedHashSet<>();
 
     if (!journeyInstance.getJourneyInstanceQuestions().isEmpty()) {
       journeyInstance.getJourneyInstanceQuestions().stream()
