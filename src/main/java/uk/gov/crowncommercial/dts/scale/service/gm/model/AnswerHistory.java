@@ -8,7 +8,7 @@ import lombok.Value;
 @Value
 public class AnswerHistory {
 
-  String answer;
   String answerText;
+  String answer;
 
 }

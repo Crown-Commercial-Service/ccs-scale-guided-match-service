@@ -9,7 +9,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException.NotFound;
+import org.springframework.web.client.RestClientException;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.exception.MissingGMDataException;
+import uk.gov.crowncommercial.dts.scale.service.gm.exception.ResourceNotFoundException;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.ApiError;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.ApiErrors;
 
@@ -23,6 +27,7 @@ public class GlobalErrorHandler implements ErrorController {
 
   private static final String ERR_MSG_DEFAULT = "An error occured processing the request";
   private static final String ERR_MSG_VALIDATION = "Validation error processing the request";
+  private static final String ERR_MSG_RESOURCE_NOT_FOUND = "Resource not found";
 
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ExceptionHandler({ValidationException.class, HttpMessageNotReadableException.class})
@@ -30,8 +35,44 @@ public class GlobalErrorHandler implements ErrorController {
 
     log.trace("Request validation exception", exception);
 
+    ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST.toString(), ERR_MSG_RESOURCE_NOT_FOUND,
+        exception.getMessage());
+    return new ApiErrors(Arrays.asList(apiError));
+  }
+
+  @ExceptionHandler({RestClientException.class})
+  public ResponseEntity<ApiErrors> handleRestClientException(final RestClientException exception) {
+
+    log.error("Upstream (Decision Tree Service) error", exception);
+
+    if (exception instanceof NotFound) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ApiErrors(Arrays.asList(new ApiError(HttpStatus.NOT_FOUND.toString(),
+              ERR_MSG_RESOURCE_NOT_FOUND, "Upstream resource not found"))));
+    }
+    return ResponseEntity.badRequest().body(new ApiErrors(Arrays
+        .asList(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR.toString(), ERR_MSG_DEFAULT, ""))));
+  }
+
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  @ExceptionHandler({ResourceNotFoundException.class})
+  public ApiErrors handleResourceNotFoundException(final ResourceNotFoundException exception) {
+
+    log.info("Requested resource not found", exception);
+
     ApiError apiError =
-        new ApiError(HttpStatus.BAD_REQUEST.toString(), ERR_MSG_VALIDATION, exception.getMessage());
+        new ApiError(HttpStatus.NOT_FOUND.toString(), ERR_MSG_VALIDATION, exception.getMessage());
+    return new ApiErrors(Arrays.asList(apiError));
+  }
+
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  @ExceptionHandler({MissingGMDataException.class}) // Others
+  public ApiErrors handleInternalException(final Exception exception) {
+
+    log.error("Internal application exception", exception);
+
+    ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR.toString(), ERR_MSG_DEFAULT,
+        "Contact administrator");
     return new ApiErrors(Arrays.asList(apiError));
   }
 

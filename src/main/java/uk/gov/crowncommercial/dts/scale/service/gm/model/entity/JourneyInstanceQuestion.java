@@ -4,9 +4,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import javax.persistence.*;
-import org.hibernate.annotations.Immutable;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.QuestionType;
 
@@ -14,8 +15,9 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.QuestionType;
  *
  */
 @Entity
-@Immutable
 @Data
+@EqualsAndHashCode(exclude = "journeyInstance")
+@ToString(exclude = "journeyInstance")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "journey_instance_questions")
 public class JourneyInstanceQuestion {
@@ -25,12 +27,12 @@ public class JourneyInstanceQuestion {
   @Column(name = "journey_instance_question_id")
   Long id;
 
-  @Column(name = "journey_instance_id")
-  Long journeyInstanceId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "journey_instance_id")
+  JourneyInstance journeyInstance;
 
-  @OneToMany(cascade = CascadeType.ALL)
-  @JoinColumn(name = "journey_instance_question_id")
-  Set<JourneyInstanceAnswer> journeyInstanceAnswers;
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "journeyInstanceQuestion")
+  Set<JourneyInstanceAnswer> journeyInstanceAnswers = new HashSet<>();
 
   @Column(columnDefinition = "uuid", name = "journey_question_id")
   UUID uuid;
@@ -48,11 +50,14 @@ public class JourneyInstanceQuestion {
   @Column(name = "question_type")
   QuestionType type;
 
-  public Set<JourneyInstanceAnswer> getJourneyInstanceAnswers() {
-    if (journeyInstanceAnswers == null) {
-      journeyInstanceAnswers = new HashSet<>();
-    }
-    return journeyInstanceAnswers;
+  public void addJourneyInstanceAnswer(final JourneyInstanceAnswer jia) {
+    journeyInstanceAnswers.add(jia);
+    jia.setJourneyInstanceQuestion(this);
+  }
+
+  @PreRemove
+  public void onPreRemove() {
+    journeyInstance.getJourneyInstanceQuestions().remove(this);
   }
 
 }

@@ -23,7 +23,7 @@ public class GuidedMatchController {
 
   private final SearchTermLookupService searchTermLookupService;
   private final DecisionTreeService decisionTreeService;
-  private final JourneyInstanceService guidedMatchHistoryService;
+  private final JourneyInstanceService journeyInstanceService;
 
   @GetMapping("/journey-summaries/{lookup-entry-id}")
   public GetJourneySummaryResponse getJourneySummary(
@@ -55,8 +55,24 @@ public class GuidedMatchController {
         "getJourneyQuestionOutcome(journey-instance-id: {}, question-id: {}, answeredQuestions: {})",
         journeyInstanceId, questionId, answeredQuestions);
 
-    return decisionTreeService.getJourneyQuestionOutcome(journeyInstanceId, questionId,
+    Outcome outcome = decisionTreeService.getJourneyQuestionOutcome(journeyInstanceId, questionId,
         answeredQuestions);
+
+    Set<QuestionHistory> journeyHistory =
+        journeyInstanceService.getQuestionHistory(journeyInstanceId);
+
+    return new GetJourneyQuestionOutcomeResponse(outcome, journeyHistory);
+  }
+
+  @GetMapping(path = "/journey-instances/{journey-instance-id}/questions/{question-id}")
+  public QuestionDefinitionList getJourneyQuestion(
+      @PathVariable("journey-instance-id") final String journeyInstanceId,
+      @PathVariable("question-id") final String questionId) {
+
+    log.debug("getJourneyQuestion(journey-instance-id: {}, question-id: {})", journeyInstanceId,
+        questionId);
+
+    return decisionTreeService.getJourneyQuestion(journeyInstanceId, questionId);
   }
 
   @GetMapping("/journey-instances/{journey-instance-id}")
@@ -65,7 +81,7 @@ public class GuidedMatchController {
 
     log.debug("getJourneyHistory(journey-instance-id: {})", journeyInstanceId);
 
-    return guidedMatchHistoryService.getJourneyHistory(journeyInstanceId);
+    return journeyInstanceService.getJourneyHistory(journeyInstanceId);
   }
 
 }
