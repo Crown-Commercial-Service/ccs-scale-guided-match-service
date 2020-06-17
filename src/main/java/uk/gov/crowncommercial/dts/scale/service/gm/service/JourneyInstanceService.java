@@ -9,6 +9,7 @@ import java.util.*;
 import javax.transaction.Transactional;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.exception.MissingGMDataException;
@@ -143,7 +144,7 @@ public class JourneyInstanceService {
 
       agreementList.stream().forEach(agreement -> {
 
-        if (agreement.getLots().isEmpty()) {
+        if (CollectionUtils.isEmpty(agreement.getLots())) {
           updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
               createJourneyInstanceOutcomeDetails(agreement.getNumber(), Optional.empty()));
         } else {
