@@ -1,11 +1,13 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.model;
 
+import lombok.Builder;
 import lombok.Value;
 
 /**
  * Commercial agreement lot
  */
 @Value
+@Builder
 public class Lot {
 
   String number;

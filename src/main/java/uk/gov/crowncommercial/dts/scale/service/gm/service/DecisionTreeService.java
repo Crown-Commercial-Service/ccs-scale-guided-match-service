@@ -11,6 +11,8 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.exception.MissingGMDataException;
+import uk.gov.crowncommercial.dts.scale.service.gm.exception.ResourceNotFoundException;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.JourneyInstance;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.external.dt.DTJourney;
@@ -55,13 +57,11 @@ public class DecisionTreeService {
     DTJourney dtJourney =
         restTemplate.getForObject(getJourneyUriTemplate, DTJourney.class, journeyId);
 
-    // TODO: 404 not foundetc
-
     log.debug("Journey from Decision Tree service: {}", dtJourney);
-
+    UUID journeyUuid = UUID.fromString(dtJourney.getUuid());
     JourneyInstance journeyInstance = journeyInstanceService.createJourneyInstance(
-        journeyRepo.findById(UUID.fromString(dtJourney.getUuid()))
-            .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found")),
+        journeyRepo.findById(journeyUuid).orElseThrow(
+            () -> new MissingGMDataException("Journey not found in repo: " + journeyUuid)),
         journeySelectionParameters.getSearchTerm());
 
     // TODO: post-MVP: DT service should support question groups (multiple questions)
@@ -85,7 +85,8 @@ public class DecisionTreeService {
       final String questionId) {
     JourneyInstance journeyInstance =
         journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
-            .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Journey instance not found: " + journeyInstanceId));
 
     QuestionDefinitionList questionDefinitionList =
         convertDTQuestionDefinitionList(restTemplate.getForObject(getJourneyQuestionUriTemplate,
@@ -115,7 +116,8 @@ public class DecisionTreeService {
 
     JourneyInstance journeyInstance =
         journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
-            .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Journey instance not found: " + journeyInstanceId));
 
     QuestionDefinition answeredQuestionDefinition =
         convertDTQuestionDefinitionList(restTemplate.getForObject(getJourneyQuestionUriTemplate,

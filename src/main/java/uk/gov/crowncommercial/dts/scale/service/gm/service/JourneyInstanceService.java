@@ -1,5 +1,6 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -10,6 +11,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.exception.MissingGMDataException;
+import uk.gov.crowncommercial.dts.scale.service.gm.exception.ResourceNotFoundException;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceQuestionRepo;
@@ -27,22 +30,6 @@ public class JourneyInstanceService {
   private final JourneyInstanceQuestionRepo journeyInstanceQuestionRepo;
   private final Clock clock;
 
-  public GetJourneyHistoryResponse getJourneyHistory(final String journeyInstanceId) {
-
-    JourneyInstance journeyInstance = findByUuid(UUID.fromString(journeyInstanceId))
-        .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
-
-    OutcomeData outcomeData;
-    if (journeyInstance.getOutcomeType() == OutcomeType.AGREEMENT) {
-      // TODO TOMORROW! outcomeData = new AgreementList()
-    }
-
-    return new GetJourneyHistoryResponse(journeyInstance.getOriginalSearchTerm(), null,
-        Outcome.builder().outcomeType(journeyInstance.getOutcomeType()).data(null)
-            .timestamp(journeyInstance.getEndDateTime().toInstant(ZoneOffset.UTC)).build(),
-        getQuestionHistory(journeyInstance));
-  }
-
   public JourneyInstance createJourneyInstance(final Journey journey,
       final String originalSearchTerm) {
 
@@ -59,32 +46,6 @@ public class JourneyInstanceService {
     return journeyInstanceRepo.findByUuid(uuid);
   }
 
-  public void updateJourneyInstanceAnswers(final JourneyInstance journeyInstance,
-      final Set<AnsweredQuestion> answeredQuestions,
-      final QuestionDefinition answeredQuestionDefinition) {
-
-    answeredQuestions.stream().forEach(aq -> {
-
-      JourneyInstanceQuestion journeyInstanceQuestion =
-          journeyInstance.getJourneyInstanceQuestions().stream()
-              .filter(jiq -> jiq.getUuid().toString().equals(aq.getUuid())).findFirst()
-              .orElseThrow(() -> new RuntimeException("TODO: 404 etc"));
-
-      aq.getAnswers().stream().forEach(a -> {
-        JourneyInstanceAnswer jia = new JourneyInstanceAnswer();
-        jia.setAnswerText(answeredQuestionDefinition.getAnswerDefinitions().stream()
-            .filter(ad -> ad.getId().equals(a.getUuid())).findFirst().get().getText());
-        jia.setAnswerId(UUID.fromString(a.getUuid()));
-        if (NumberUtils.isCreatable(a.getValue())) {
-          jia.setValueNumber(new BigDecimal(a.getValue()));
-        }
-        journeyInstanceQuestion.addJourneyInstanceAnswer(jia);
-      });
-
-    });
-    journeyInstanceRepo.saveAndFlush(journeyInstance);
-  }
-
   /**
    * For MVP, we are recording a single linear journey only, so when a client returns to a previous
    * question (or the start of the journey) we must overwrite any question history from that point
@@ -98,8 +59,10 @@ public class JourneyInstanceService {
       final QuestionDefinitionList questionDefinitionList) {
 
     // TODO: post-MVP: Deal with question groups (the whole collection)
-    final Question questionInstance =
-        questionDefinitionList.stream().findFirst().get().getQuestion();
+    final Question questionInstance = questionDefinitionList.stream().findFirst()
+        .orElseThrow(() -> new MissingGMDataException(
+            "Question instance definition not found: " + questionDefinitionList.toString()))
+        .getQuestion();
 
     // Delete all instances from repo with >= order than the current instance..
     Optional<JourneyInstanceQuestion> currentJiq = journeyInstanceQuestionRepo
@@ -136,6 +99,34 @@ public class JourneyInstanceService {
     journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
 
+  public void updateJourneyInstanceAnswers(final JourneyInstance journeyInstance,
+      final Set<AnsweredQuestion> answeredQuestions,
+      final QuestionDefinition answeredQuestionDefinition) {
+
+    answeredQuestions.stream().forEach(aq -> {
+
+      JourneyInstanceQuestion journeyInstanceQuestion =
+          journeyInstance.getJourneyInstanceQuestions().stream()
+              .filter(jiq -> jiq.getUuid().toString().equals(aq.getUuid())).findFirst()
+              .orElseThrow(() -> new MissingGMDataException(
+                  "Journey instance question matching answered question not found in repo: "
+                      + aq.getUuid()));
+
+      aq.getAnswers().stream().forEach(a -> {
+        JourneyInstanceAnswer jia = new JourneyInstanceAnswer();
+        jia.setAnswerText(answeredQuestionDefinition.getAnswerDefinitions().stream()
+            .filter(ad -> ad.getId().equals(a.getUuid())).findFirst().get().getText());
+        jia.setAnswerId(UUID.fromString(a.getUuid()));
+        if (NumberUtils.isCreatable(a.getValue())) {
+          jia.setValueNumber(new BigDecimal(a.getValue()));
+        }
+        journeyInstanceQuestion.addJourneyInstanceAnswer(jia);
+      });
+
+    });
+    journeyInstanceRepo.saveAndFlush(journeyInstance);
+  }
+
   public void updateJourneyInstanceOutcome(final JourneyInstance journeyInstance,
       final OutcomeType outcomeType, final Optional<OutcomeData> outcomeData) {
 
@@ -147,8 +138,8 @@ public class JourneyInstanceService {
         journeyInstanceRepo.saveAndFlush(journeyInstance);
 
     if (outcomeType == OutcomeType.AGREEMENT) {
-      AgreementList agreementList = (AgreementList) outcomeData
-          .orElseThrow(() -> new RuntimeException("TODO: 500 Agreement outcome without agreement"));
+      AgreementList agreementList = (AgreementList) outcomeData.orElseThrow(
+          () -> new MissingGMDataException("Missing agreement data in outcome from DT service"));
 
       agreementList.stream().forEach(agreement -> {
 
@@ -176,10 +167,39 @@ public class JourneyInstanceService {
     return jiod;
   }
 
-  public Set<QuestionHistory> getQuestionHistory(final String journeyInstanceId) {
-    JourneyInstance journeyInstance = findByUuid(UUID.fromString(journeyInstanceId))
-        .orElseThrow(() -> new RuntimeException("TODO: 404 Journey Instance record not found"));
+  public GetJourneyHistoryResponse getJourneyHistory(final String journeyInstanceId) {
+    JourneyInstance journeyInstance = findByUuid(UUID.fromString(journeyInstanceId)).orElseThrow(
+        () -> new ResourceNotFoundException("Journey instance not found: " + journeyInstanceId));
 
+    OutcomeData outcomeData = null;
+    if (journeyInstance.getOutcomeType() == OutcomeType.AGREEMENT) {
+      final Set<Agreement> agreements = new HashSet<>();
+      final Map<String, Set<Lot>> agreementLots = new HashMap<>();
+
+      // Map the 'flat' database structure (with repeating agreement number) to the Agreement model
+      journeyInstance.getJourneyInstanceOutcomeDetails().stream().forEach(jiod -> {
+        agreementLots.computeIfAbsent(jiod.getAgreementNumber(), k -> new HashSet<>());
+
+        if (isNotBlank(jiod.getLotNumber())) {
+          Lot lot = Lot.builder().number(jiod.getLotNumber()).build();
+          agreementLots.get(jiod.getAgreementNumber()).add(lot);
+        }
+      });
+      agreementLots.entrySet().stream().forEach(agreementLot -> agreements
+          .add(new Agreement(agreementLot.getKey(), agreementLot.getValue())));
+
+      outcomeData = new AgreementList(agreements);
+    }
+
+    return new GetJourneyHistoryResponse(journeyInstance.getOriginalSearchTerm(), null,
+        Outcome.builder().outcomeType(journeyInstance.getOutcomeType()).data(outcomeData)
+            .timestamp(journeyInstance.getEndDateTime().toInstant(ZoneOffset.UTC)).build(),
+        getQuestionHistory(journeyInstance));
+  }
+
+  public Set<QuestionHistory> getQuestionHistory(final String journeyInstanceId) {
+    JourneyInstance journeyInstance = findByUuid(UUID.fromString(journeyInstanceId)).orElseThrow(
+        () -> new ResourceNotFoundException("Journey instance not found: " + journeyInstanceId));
     return getQuestionHistory(journeyInstance);
   }
 
