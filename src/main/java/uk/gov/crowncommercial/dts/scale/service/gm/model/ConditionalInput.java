@@ -19,5 +19,5 @@ public class ConditionalInput {
    * <code>EnumSet.of(QuestionType.TEXT_INPUT ...)</code>
    */
   QuestionType type;
-
+  Unit unit;
 }

@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.QuestionType;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.Unit;
 
 /**
  *
@@ -49,6 +50,10 @@ public class JourneyInstanceQuestion {
   @Enumerated(EnumType.STRING)
   @Column(name = "question_type")
   QuestionType type;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "unit")
+  Unit unit;
 
   public void addJourneyInstanceAnswer(final JourneyInstanceAnswer jia) {
     journeyInstanceAnswers.add(jia);
