@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.Unit;
 
 /**
  *
@@ -47,4 +48,8 @@ public class JourneyInstanceAnswer {
 
   @Column(name = "value_date")
   LocalDate valueDate;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "unit")
+  Unit unit;
 }

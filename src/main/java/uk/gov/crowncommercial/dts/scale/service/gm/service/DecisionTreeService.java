@@ -102,9 +102,9 @@ public class DecisionTreeService {
 
     return new QuestionDefinitionList(
         dtQuestionDefinitionList.stream().map(dtQuestionDefinition -> {
-          Question question =
-              new Question(dtQuestionDefinition.getUuid(), dtQuestionDefinition.getText(),
-                  dtQuestionDefinition.getHint(), dtQuestionDefinition.getType());
+          Question question = new Question(dtQuestionDefinition.getUuid(),
+              dtQuestionDefinition.getText(), dtQuestionDefinition.getHint(),
+              dtQuestionDefinition.getType(), dtQuestionDefinition.getUnit());
 
           return new QuestionDefinition(question, null, null, null,
               dtQuestionDefinition.getAnswerDefinitions());

@@ -10,5 +10,6 @@ public class AnswerHistory {
 
   String answerText;
   String answer;
+  Unit unit;
 
 }

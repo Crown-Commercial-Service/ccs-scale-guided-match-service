@@ -12,5 +12,6 @@ public class Question {
   String text;
   String hint;
   QuestionType type;
+  Unit unit;
 
 }

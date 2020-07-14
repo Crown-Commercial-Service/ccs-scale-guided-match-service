@@ -95,6 +95,7 @@ public class JourneyInstanceService {
     jiq.setHint(questionInstance.getHint());
     jiq.setType(questionInstance.getType());
     jiq.setOrder(order);
+    jiq.setUnit(questionInstance.getUnit());
     journeyInstance.addJourneyInstanceQuestion(jiq);
 
     journeyInstanceRepo.saveAndFlush(journeyInstance);
@@ -115,9 +116,17 @@ public class JourneyInstanceService {
 
       aq.getAnswers().stream().forEach(a -> {
         JourneyInstanceAnswer jia = new JourneyInstanceAnswer();
-        jia.setAnswerText(answeredQuestionDefinition.getAnswerDefinitions().stream()
-            .filter(ad -> ad.getId().equals(a.getUuid())).findFirst().get().getText());
+
+        AnswerDefinition answerDef = answeredQuestionDefinition.getAnswerDefinitions().stream()
+            .filter(ad -> ad.getId().equals(a.getUuid())).findFirst().get();
+
+        jia.setAnswerText(answerDef.getText());
         jia.setAnswerId(UUID.fromString(a.getUuid()));
+
+        if (answerDef.getConditionalInput() != null) {
+          jia.setUnit(answerDef.getConditionalInput().getUnit());
+        }
+
         if (NumberUtils.isCreatable(a.getValue())) {
           jia.setValueNumber(new BigDecimal(a.getValue()));
         }
@@ -211,16 +220,16 @@ public class JourneyInstanceService {
       journeyInstance.getJourneyInstanceQuestions().stream()
           .sorted(Comparator.comparing(JourneyInstanceQuestion::getOrder))
           .filter(jiq -> !jiq.getJourneyInstanceAnswers().isEmpty()).forEach(jiq -> {
-            Question question =
-                new Question(jiq.getUuid().toString(), jiq.getText(), jiq.getHint(), jiq.getType());
+            Question question = new Question(jiq.getUuid().toString(), jiq.getText(), jiq.getHint(),
+                jiq.getType(), jiq.getUnit());
             Set<AnswerHistory> answers = new HashSet<>();
             jiq.getJourneyInstanceAnswers().stream().forEach(jia -> {
 
               String answerHistoryValue = jia.getValueNumber() != null
                   ? jia.getValueNumber().toString() : jia.getAnswerId().toString();
 
-              answers.add(new AnswerHistory(jia.getAnswerText(), answerHistoryValue));
-
+              answers
+                  .add(new AnswerHistory(jia.getAnswerText(), answerHistoryValue, jia.getUnit()));
             });
             questionHistory.add(new QuestionHistory(question, answers, ""));
           });
