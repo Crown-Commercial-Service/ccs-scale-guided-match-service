@@ -37,16 +37,15 @@ public class SearchTermLookupService {
 
     log.debug("Search journeys for searchTerm: '{}'", searchTerm);
 
-    List<SearchDomain> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTerm);
+    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTerm);
     log.debug("Found {} matching SearchDomain records", searchDomains.size());
 
     return searchDomains.stream().map(sd -> {
       SearchJourneyResponse sjr = new SearchJourneyResponse();
-      sjr.setJourneyId(sd.getJourney().getId());
-      sjr.setModifier(sd.getModifierJourneyName());
-      sjr.setSelectionText(sd.getJourneySelectionText());
-      sjr.setSelectionDescription(sd.getJourneySelectionDescription());
-      sjr.setSearchTerm(sd.getSearchTerm().getTerm());
+      sjr.setJourneyId(String.valueOf(sd[0]));
+      sjr.setModifier(sd[1] == null ? null : String.valueOf(sd[1]));
+      sjr.setSelectionText(sd[2] == null ? null : String.valueOf(sd[2]));
+      sjr.setSelectionDescription(sd[3] == null ? null : String.valueOf(sd[3]));
       return sjr;
     }).collect(Collectors.toList());
 
