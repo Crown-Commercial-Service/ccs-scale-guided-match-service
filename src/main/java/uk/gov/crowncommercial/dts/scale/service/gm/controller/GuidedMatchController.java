@@ -1,6 +1,7 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
@@ -82,6 +83,15 @@ public class GuidedMatchController {
     log.debug("getJourneyHistory(journey-instance-id: {})", journeyInstanceId);
 
     return journeyInstanceService.getJourneyHistory(journeyInstanceId);
+  }
+
+  @GetMapping("/search-journeys/{search-term}")
+  public List<SearchJourneyResponse> searchJourneys(
+      @PathVariable("search-term") final String searchTerm) {
+
+    log.debug("searchJourneys(search-term: {})", searchTerm);
+
+    return searchTermLookupService.searchJourneys(searchTerm);
   }
 
 }
