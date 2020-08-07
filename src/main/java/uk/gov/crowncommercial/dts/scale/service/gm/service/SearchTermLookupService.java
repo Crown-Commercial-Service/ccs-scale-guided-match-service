@@ -1,10 +1,13 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.GetJourneySummaryResponse;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.SearchJourneyResponse;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.SearchDomain;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.SearchDomainRepo;
 
@@ -15,6 +18,11 @@ import uk.gov.crowncommercial.dts.scale.service.gm.repository.SearchDomainRepo;
 @RequiredArgsConstructor
 @Slf4j
 public class SearchTermLookupService {
+
+  public static final int JOURNEY_ID_INDEX = 0;
+  public static final int MODIFIER_JOURNEY_NAME_INDEX = 1;
+  public static final int JOURNEY_SELECTION_TEXT_INDEX = 2;
+  public static final int JOURNEY_SELECTION_DESC_INDEX = 3;
 
   private final SearchDomainRepo searchDomainRepo;
 
@@ -30,4 +38,28 @@ public class SearchTermLookupService {
         searchDomain.getJourneySelectionDescription());
   }
 
+  public List<SearchJourneyResponse> searchJourneys(final String searchTerm) {
+
+    log.debug("Search journeys for searchTerm: '{}'", searchTerm);
+
+    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTerm);
+    log.debug("Found {} matching SearchDomain records", searchDomains.size());
+
+    /**
+     * Because of using the DISTINCT keyword in the native query, had to use an collection of Object
+     * arrays as the return object, so need to map this to the SearchJourneyResponse.
+     */
+    return searchDomains.stream().map(sd -> {
+      SearchJourneyResponse sjr = new SearchJourneyResponse();
+      sjr.setJourneyId(String.valueOf(sd[JOURNEY_ID_INDEX]));
+      sjr.setModifier(sd[MODIFIER_JOURNEY_NAME_INDEX] == null ? null
+          : String.valueOf(sd[MODIFIER_JOURNEY_NAME_INDEX]));
+      sjr.setSelectionText(sd[JOURNEY_SELECTION_TEXT_INDEX] == null ? null
+          : String.valueOf(sd[JOURNEY_SELECTION_TEXT_INDEX]));
+      sjr.setSelectionDescription(sd[JOURNEY_SELECTION_DESC_INDEX] == null ? null
+          : String.valueOf(sd[JOURNEY_SELECTION_DESC_INDEX]));
+      return sjr;
+    }).collect(Collectors.toList());
+
+  }
 }
