@@ -19,6 +19,11 @@ import uk.gov.crowncommercial.dts.scale.service.gm.repository.SearchDomainRepo;
 @Slf4j
 public class SearchTermLookupService {
 
+  public static final int JOURNEY_ID_INDEX = 0;
+  public static final int MODIFIER_JOURNEY_NAME_INDEX = 1;
+  public static final int JOURNEY_SELECTION_TEXT_INDEX = 2;
+  public static final int JOURNEY_SELECTION_DESC_INDEX = 3;
+
   private final SearchDomainRepo searchDomainRepo;
 
   public GetJourneySummaryResponse getJourneySummary(final UUID lookupEntryId) {
@@ -40,12 +45,19 @@ public class SearchTermLookupService {
     List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTerm);
     log.debug("Found {} matching SearchDomain records", searchDomains.size());
 
+    /**
+     * Because of using the DISTINCT keyword in the native query, had to use an collection of Object
+     * arrays as the return object, so need to map this to the SearchJourneyResponse.
+     */
     return searchDomains.stream().map(sd -> {
       SearchJourneyResponse sjr = new SearchJourneyResponse();
-      sjr.setJourneyId(String.valueOf(sd[0]));
-      sjr.setModifier(sd[1] == null ? null : String.valueOf(sd[1]));
-      sjr.setSelectionText(sd[2] == null ? null : String.valueOf(sd[2]));
-      sjr.setSelectionDescription(sd[3] == null ? null : String.valueOf(sd[3]));
+      sjr.setJourneyId(String.valueOf(sd[JOURNEY_ID_INDEX]));
+      sjr.setModifier(sd[MODIFIER_JOURNEY_NAME_INDEX] == null ? null
+          : String.valueOf(sd[MODIFIER_JOURNEY_NAME_INDEX]));
+      sjr.setSelectionText(sd[JOURNEY_SELECTION_TEXT_INDEX] == null ? null
+          : String.valueOf(sd[JOURNEY_SELECTION_TEXT_INDEX]));
+      sjr.setSelectionDescription(sd[JOURNEY_SELECTION_DESC_INDEX] == null ? null
+          : String.valueOf(sd[JOURNEY_SELECTION_DESC_INDEX]));
       return sjr;
     }).collect(Collectors.toList());
 
