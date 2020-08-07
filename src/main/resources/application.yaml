@@ -16,7 +16,7 @@ spring:
       fail-on-missing-external-type-id-property: false
   jpa:
     database: postgresql
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: validate
 
