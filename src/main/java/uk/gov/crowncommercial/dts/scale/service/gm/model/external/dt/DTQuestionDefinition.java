@@ -16,6 +16,7 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.Unit;
 public class DTQuestionDefinition {
 
   String uuid;
+  String definitionUuid;
   String text;
   String hint;
   String pattern;
