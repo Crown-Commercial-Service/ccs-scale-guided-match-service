@@ -6,11 +6,11 @@ import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.SUPP
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.config.DecisionTreeServiceConfig;
 import uk.gov.crowncommercial.dts.scale.service.gm.exception.MissingGMDataException;
 import uk.gov.crowncommercial.dts.scale.service.gm.exception.ResourceNotFoundException;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
@@ -29,33 +29,28 @@ public class DecisionTreeService {
 
   private final JourneyInstanceService journeyInstanceService;
   private final JourneyRepo journeyRepo;
-
+  private final FailureValidationService failureValidationService;
+  private final DecisionTreeServiceConfig decisionTreeServiceConfig;
   private final RestTemplate restTemplate;
-  private final String getJourneyUriTemplate;
-  private final String getJourneyQuestionOutcomeUriTemplate;
-  private final String getJourneyQuestionUriTemplate;
 
   public DecisionTreeService(final JourneyInstanceService journeyInstanceService,
-      final JourneyRepo journeyRepo, final RestTemplateBuilder restTemplateBuilder,
-      @Value("${external.decision-tree-service.url}") final String dtServiceBaseUrl,
-      @Value("${external.decision-tree-service.uri-templates.get-journey}") final String getJourneyUriTemplate,
-      @Value("${external.decision-tree-service.uri-templates.get-journey-question-outcome}") final String getJourneyQuestionOutcomeUriTemplate,
-      @Value("${external.decision-tree-service.uri-templates.get-journey-question}") final String getJourneyQuestionUriTemplate) {
+      final JourneyRepo journeyRepo, final FailureValidationService failureValidationService,
+      final RestTemplateBuilder restTemplateBuilder,
+      final DecisionTreeServiceConfig decisionTreeServiceConfig) {
 
     this.journeyInstanceService = journeyInstanceService;
     this.journeyRepo = journeyRepo;
-    this.restTemplate = restTemplateBuilder.rootUri(dtServiceBaseUrl).build();
-    this.getJourneyUriTemplate = getJourneyUriTemplate;
-    this.getJourneyQuestionOutcomeUriTemplate = getJourneyQuestionOutcomeUriTemplate;
-    this.getJourneyQuestionUriTemplate = getJourneyQuestionUriTemplate;
+    this.failureValidationService = failureValidationService;
+    this.decisionTreeServiceConfig = decisionTreeServiceConfig;
+    this.restTemplate = restTemplateBuilder.rootUri(decisionTreeServiceConfig.getUrl()).build();
   }
 
   public StartJourneyResponse startJourney(final String journeyId,
       final JourneySelectionParameters journeySelectionParameters) {
 
     // Start a 'session' by creating and persisting a new Journey Instance
-    DTJourney dtJourney =
-        restTemplate.getForObject(getJourneyUriTemplate, DTJourney.class, journeyId);
+    DTJourney dtJourney = restTemplate.getForObject(
+        decisionTreeServiceConfig.getUriTemplates().getGetJourney(), DTJourney.class, journeyId);
 
     log.debug("Journey from Decision Tree service: {}", dtJourney);
     UUID journeyUuid = UUID.fromString(dtJourney.getUuid());
@@ -88,8 +83,8 @@ public class DecisionTreeService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Journey instance not found: " + journeyInstanceId));
 
-    QuestionDefinitionList questionDefinitionList =
-        convertDTQuestionDefinitionList(restTemplate.getForObject(getJourneyQuestionUriTemplate,
+    QuestionDefinitionList questionDefinitionList = convertDTQuestionDefinitionList(restTemplate
+        .getForObject(decisionTreeServiceConfig.getUriTemplates().getGetJourneyQuestion(),
             DTQuestionDefinitionList.class, journeyInstance.getJourney().getId(), questionId));
 
     journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinitionList);
@@ -107,7 +102,8 @@ public class DecisionTreeService {
               dtQuestionDefinition.getType(), dtQuestionDefinition.getUnit());
 
           return new QuestionDefinition(question, null, null, null,
-              dtQuestionDefinition.getAnswerDefinitions());
+              dtQuestionDefinition.getAnswerDefinitions(), failureValidationService
+                  .findFailureValidationByQuestionDefId(dtQuestionDefinition.getDefinitionUuid()));
         }).collect(Collectors.toList()));
   }
 
@@ -119,8 +115,8 @@ public class DecisionTreeService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Journey instance not found: " + journeyInstanceId));
 
-    QuestionDefinition answeredQuestionDefinition =
-        convertDTQuestionDefinitionList(restTemplate.getForObject(getJourneyQuestionUriTemplate,
+    QuestionDefinition answeredQuestionDefinition = convertDTQuestionDefinitionList(restTemplate
+        .getForObject(decisionTreeServiceConfig.getUriTemplates().getGetJourneyQuestion(),
             DTQuestionDefinitionList.class, journeyInstance.getJourney().getId(), questionId))
                 .get(0);
 
@@ -131,8 +127,10 @@ public class DecisionTreeService {
     uriTemplateVars.put("journey-uuid", journeyInstance.getJourney().getId().toString());
     uriTemplateVars.put("question-uuid", questionId);
 
-    DTOutcome dtOutcome = restTemplate.postForEntity(getJourneyQuestionOutcomeUriTemplate,
-        answeredQuestions, DTOutcome.class, uriTemplateVars).getBody();
+    DTOutcome dtOutcome = restTemplate
+        .postForEntity(decisionTreeServiceConfig.getUriTemplates().getGetJourneyQuestionOutcome(),
+            answeredQuestions, DTOutcome.class, uriTemplateVars)
+        .getBody();
 
     OutcomeData outcomeData = null;
     if (dtOutcome.getOutcomeType() == QUESTION) {

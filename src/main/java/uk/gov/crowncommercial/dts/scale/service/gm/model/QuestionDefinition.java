@@ -14,5 +14,6 @@ public class QuestionDefinition {
   String prePopulatedAnswerId;
   String prePopulatedAnswerSource;
   Set<AnswerDefinition> answerDefinitions;
+  Set<FailureValidation> failureValidations;
 
 }
