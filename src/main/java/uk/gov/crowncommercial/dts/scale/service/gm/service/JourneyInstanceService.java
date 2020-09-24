@@ -18,6 +18,7 @@ import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.*;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceQuestionRepo;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceRepo;
+import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyRepo;
 
 /**
  * Service component handling all operations around journey instances, questions, answers and
@@ -30,10 +31,14 @@ public class JourneyInstanceService {
 
   private final JourneyInstanceRepo journeyInstanceRepo;
   private final JourneyInstanceQuestionRepo journeyInstanceQuestionRepo;
+  private final JourneyRepo journeyRepo;
   private final Clock clock;
 
-  public JourneyInstance createJourneyInstance(final Journey journey,
+  public JourneyInstance createJourneyInstance(final String journeyId,
       final String originalSearchTerm) {
+
+    Journey journey = journeyRepo.findById(UUID.fromString(journeyId))
+        .orElseThrow(() -> new MissingGMDataException("Journey not found in repo: " + journeyId));
 
     JourneyInstance journeyInstance = new JourneyInstance();
     journeyInstance.setUuid(UUID.randomUUID());
@@ -148,33 +153,50 @@ public class JourneyInstanceService {
     journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
 
+  /**
+   * Conditionally update the given <code>JourneyInstance</code> with outcome details if outcome has
+   * type {@link OutcomeType#AGREEMENT} or {@link OutcomeType#SUPPORT}, otherwise do nothing.
+   *
+   * @param journeyInstance
+   * @param outcome
+   */
   public void updateJourneyInstanceOutcome(final JourneyInstance journeyInstance,
       final Outcome outcome) {
 
-    journeyInstance.setEndDateTime(LocalDateTime.now(clock));
-    journeyInstance.setOutcomeType(outcome.getOutcomeType());
-    journeyInstance.clearJourneyInstanceOutcomeDetails();
+    if (outcome.getOutcomeType() == OutcomeType.AGREEMENT
+        || outcome.getOutcomeType() == OutcomeType.SUPPORT) {
 
-    final JourneyInstance updatedJourneyInstance =
-        journeyInstanceRepo.saveAndFlush(journeyInstance);
+      log.debug("Outcome is of type AGREEMENT or SUPPORT, updating journey instance");
 
-    if (outcome.getOutcomeType() == OutcomeType.AGREEMENT) {
-      AgreementList agreementList = (AgreementList) outcome.getData();
+      journeyInstance.setEndDateTime(LocalDateTime.now(clock));
+      journeyInstance.setOutcomeType(outcome.getOutcomeType());
+      journeyInstance.clearJourneyInstanceOutcomeDetails();
 
-      agreementList.stream().forEach(agreement -> {
+      final JourneyInstance updatedJourneyInstance =
+          journeyInstanceRepo.saveAndFlush(journeyInstance);
 
-        if (CollectionUtils.isEmpty(agreement.getLots())) {
-          updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
-              createJourneyInstanceOutcomeDetails(agreement.getNumber(), Optional.empty()));
-        } else {
-          agreement.getLots().stream()
-              .forEach(lot -> updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
-                  createJourneyInstanceOutcomeDetails(agreement.getNumber(),
-                      Optional.of(lot.getNumber()))));
-        }
-      });
+      if (outcome.getOutcomeType() == OutcomeType.AGREEMENT) {
+
+        log.debug(
+            "Outcome is of type AGREEMENT, updating journey instance with agreement and lot details");
+
+        AgreementList agreementList = (AgreementList) outcome.getData();
+
+        agreementList.stream().forEach(agreement -> {
+
+          if (CollectionUtils.isEmpty(agreement.getLots())) {
+            updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
+                createJourneyInstanceOutcomeDetails(agreement.getNumber(), Optional.empty()));
+          } else {
+            agreement.getLots().stream()
+                .forEach(lot -> updatedJourneyInstance.addJourneyInstanceOutcomeDetails(
+                    createJourneyInstanceOutcomeDetails(agreement.getNumber(),
+                        Optional.of(lot.getNumber()))));
+          }
+        });
+      }
+      journeyInstanceRepo.saveAndFlush(updatedJourneyInstance);
     }
-    journeyInstanceRepo.saveAndFlush(updatedJourneyInstance);
   }
 
   private JourneyInstanceOutcomeDetails createJourneyInstanceOutcomeDetails(

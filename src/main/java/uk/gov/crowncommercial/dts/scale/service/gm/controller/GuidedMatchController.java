@@ -35,7 +35,15 @@ public class GuidedMatchController {
     log.debug("startJourney(journey-id: {}, journeySelectionParameters: {})", journeyId,
         journeySelectionParameters);
 
-    return decisionTreeService.startJourney(journeyId, journeySelectionParameters);
+    // Start a 'session' by creating and persisting a new Journey Instance
+    JourneyInstance journeyInstance = journeyInstanceService.createJourneyInstance(journeyId,
+        journeySelectionParameters.getSearchTerm());
+
+    // Get the journey first question definition
+    QuestionDefinitionList questionDefinitionList =
+        decisionTreeService.getJourneyFirstQuestion(journeyId);
+
+    return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
   }
 
   @PostMapping(path = "/journey-instances/{journey-instance-id}/questions/{question-id}",
@@ -49,6 +57,7 @@ public class GuidedMatchController {
         "getJourneyQuestionOutcome(journey-instance-id: {}, question-id: {}, answeredQuestions: {})",
         journeyInstanceId, questionId, answeredQuestions);
 
+    // Get the journey instance and update with the current question and answers
     JourneyInstance journeyInstance =
         journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -59,10 +68,13 @@ public class GuidedMatchController {
     QuestionDefinition questionDefinition =
         decisionTreeService.getJourneyQuestion(journeyInstanceId, questionId).get(0);
 
-    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinition.getQuestion());
+    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance,
+        questionDefinition.getQuestion());
     journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions,
         questionDefinition);
 
+    // Get the question outcome from the decision tree service and update the journey instance
+    // outcome
     Outcome outcome = decisionTreeService.getJourneyQuestionOutcome(journeyInstance, questionId,
         answeredQuestions);
 
