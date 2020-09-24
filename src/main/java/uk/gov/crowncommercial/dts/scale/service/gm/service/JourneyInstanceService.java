@@ -20,7 +20,8 @@ import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceQue
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.JourneyInstanceRepo;
 
 /**
- *
+ * Service component handling all operations around journey instances, questions, answers and
+ * outcomes.
  */
 @Service
 @RequiredArgsConstructor
@@ -48,35 +49,13 @@ public class JourneyInstanceService {
   }
 
   /**
-   * For MVP, we are recording a single linear journey only, so when a client returns to a previous
-   * question (or the start of the journey) we must overwrite any question history from that point
-   * on.
+   * Configures and persists a new journey instance question
    *
    * @param journeyInstance
-   * @param questionDefinitionList
+   * @param questionInstance
    */
-  @Transactional
   public void updateJourneyInstanceQuestions(final JourneyInstance journeyInstance,
-      final QuestionDefinitionList questionDefinitionList) {
-
-    // TODO: post-MVP: Deal with question groups (the whole collection)
-    final Question questionInstance = questionDefinitionList.stream().findFirst()
-        .orElseThrow(() -> new MissingGMDataException(
-            "Question instance definition not found: " + questionDefinitionList.toString()))
-        .getQuestion();
-
-    // Delete all instances from repo with >= order than the current instance..
-    Optional<JourneyInstanceQuestion> currentJiq = journeyInstanceQuestionRepo
-        .findByJourneyInstanceAndUuid(journeyInstance, UUID.fromString(questionInstance.getId()));
-
-    log.debug("Current JIQ: {}", currentJiq);
-
-    if (currentJiq.isPresent()) {
-      log.debug("About to delete JIQs by JourneyInstance and >= order: {}",
-          currentJiq.get().getOrder());
-      journeyInstanceQuestionRepo.deleteByJourneyInstanceAndOrderIsGreaterThanEqual(journeyInstance,
-          currentJiq.get().getOrder());
-    }
+      final Question questionInstance) {
 
     // Find the JIQ that now has the highest order and +1 to it.
     Optional<JourneyInstanceQuestion> jiqHighestOrder =
@@ -101,6 +80,38 @@ public class JourneyInstanceService {
     journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
 
+  /**
+   * Clears the journey history from <code>questionId</code> onwards based on order.
+   *
+   * @param journeyInstanceId
+   * @param questionId
+   */
+  @Transactional
+  public void clearJourneyInstanceHistory(final String journeyInstanceId, final String questionId) {
+    JourneyInstance journeyInstance =
+        journeyInstanceRepo.findByUuid(UUID.fromString(journeyInstanceId))
+            .orElseThrow(() -> new MissingGMDataException(
+                "No JourneyInstance record found for: " + journeyInstanceId));
+
+    journeyInstance.getJourneyInstanceQuestions().stream()
+        .filter(jiq -> jiq.getUuid().equals(UUID.fromString(questionId))).findFirst()
+        .ifPresent(currentJiq -> {
+
+          // Delete all instances from repo with >= order than the current instance..
+          log.debug("About to delete JIQs by JourneyInstance and >= order: {}",
+              currentJiq.getOrder());
+          journeyInstanceQuestionRepo.deleteByJourneyInstanceAndOrderIsGreaterThanEqual(
+              journeyInstance, currentJiq.getOrder());
+        });
+  }
+
+  /**
+   * Updates the journey instance answers for a journey instance question
+   *
+   * @param journeyInstance
+   * @param answeredQuestions
+   * @param answeredQuestionDefinition
+   */
   public void updateJourneyInstanceAnswers(final JourneyInstance journeyInstance,
       final Set<AnsweredQuestion> answeredQuestions,
       final QuestionDefinition answeredQuestionDefinition) {
@@ -138,18 +149,17 @@ public class JourneyInstanceService {
   }
 
   public void updateJourneyInstanceOutcome(final JourneyInstance journeyInstance,
-      final OutcomeType outcomeType, final Optional<OutcomeData> outcomeData) {
+      final Outcome outcome) {
 
     journeyInstance.setEndDateTime(LocalDateTime.now(clock));
-    journeyInstance.setOutcomeType(outcomeType);
+    journeyInstance.setOutcomeType(outcome.getOutcomeType());
     journeyInstance.clearJourneyInstanceOutcomeDetails();
 
     final JourneyInstance updatedJourneyInstance =
         journeyInstanceRepo.saveAndFlush(journeyInstance);
 
-    if (outcomeType == OutcomeType.AGREEMENT) {
-      AgreementList agreementList = (AgreementList) outcomeData.orElseThrow(
-          () -> new MissingGMDataException("Missing agreement data in outcome from DT service"));
+    if (outcome.getOutcomeType() == OutcomeType.AGREEMENT) {
+      AgreementList agreementList = (AgreementList) outcome.getData();
 
       agreementList.stream().forEach(agreement -> {
 

@@ -2,7 +2,6 @@ package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
 import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.AGREEMENT;
 import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.QUESTION;
-import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.SUPPORT;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -63,9 +62,6 @@ public class DecisionTreeService {
     QuestionDefinitionList questionDefinitionList = convertDTQuestionDefinitionList(
         new DTQuestionDefinitionList(Arrays.asList(dtJourney.getFirstQuestion())));
 
-    // Update journey history with details of the first question:
-    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinitionList);
-
     return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
   }
 
@@ -78,18 +74,15 @@ public class DecisionTreeService {
    */
   public QuestionDefinitionList getJourneyQuestion(final String journeyInstanceId,
       final String questionId) {
+
     JourneyInstance journeyInstance =
         journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Journey instance not found: " + journeyInstanceId));
 
-    QuestionDefinitionList questionDefinitionList = convertDTQuestionDefinitionList(restTemplate
-        .getForObject(decisionTreeServiceConfig.getUriTemplates().getGetJourneyQuestion(),
-            DTQuestionDefinitionList.class, journeyInstance.getJourney().getId(), questionId));
-
-    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance, questionDefinitionList);
-
-    return questionDefinitionList;
+    return convertDTQuestionDefinitionList(restTemplate.getForObject(
+        decisionTreeServiceConfig.getUriTemplates().getGetJourneyQuestion(),
+        DTQuestionDefinitionList.class, journeyInstance.getJourney().getId(), questionId));
   }
 
   private QuestionDefinitionList convertDTQuestionDefinitionList(
@@ -107,21 +100,8 @@ public class DecisionTreeService {
         }).collect(Collectors.toList()));
   }
 
-  public Outcome getJourneyQuestionOutcome(final String journeyInstanceId, final String questionId,
-      final Set<AnsweredQuestion> answeredQuestions) {
-
-    JourneyInstance journeyInstance =
-        journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "Journey instance not found: " + journeyInstanceId));
-
-    QuestionDefinition answeredQuestionDefinition = convertDTQuestionDefinitionList(restTemplate
-        .getForObject(decisionTreeServiceConfig.getUriTemplates().getGetJourneyQuestion(),
-            DTQuestionDefinitionList.class, journeyInstance.getJourney().getId(), questionId))
-                .get(0);
-
-    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions,
-        answeredQuestionDefinition);
+  public Outcome getJourneyQuestionOutcome(final JourneyInstance journeyInstance,
+      final String questionId, final Set<AnsweredQuestion> answeredQuestions) {
 
     Map<String, String> uriTemplateVars = new HashMap<>();
     uriTemplateVars.put("journey-uuid", journeyInstance.getJourney().getId().toString());
@@ -134,20 +114,9 @@ public class DecisionTreeService {
 
     OutcomeData outcomeData = null;
     if (dtOutcome.getOutcomeType() == QUESTION) {
-      QuestionDefinitionList questionDefinitionList =
-          convertDTQuestionDefinitionList((DTQuestionDefinitionList) dtOutcome.getData());
-      outcomeData = questionDefinitionList;
-
-      // Update journey history with details of the next question(s)
-      journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance,
-          questionDefinitionList);
+      outcomeData = convertDTQuestionDefinitionList((DTQuestionDefinitionList) dtOutcome.getData());
     } else if (dtOutcome.getOutcomeType() == AGREEMENT) {
       outcomeData = dtOutcome.getData();
-      journeyInstanceService.updateJourneyInstanceOutcome(journeyInstance, AGREEMENT,
-          Optional.of(outcomeData));
-    } else if (dtOutcome.getOutcomeType() == SUPPORT) {
-      journeyInstanceService.updateJourneyInstanceOutcome(journeyInstance, SUPPORT,
-          Optional.empty());
     }
 
     return Outcome.builder().outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now())
