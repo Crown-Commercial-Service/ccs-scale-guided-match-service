@@ -7,7 +7,9 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.crowncommercial.dts.scale.service.gm.exception.ResourceNotFoundException;
 import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.entity.JourneyInstance;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.JourneyInstanceService;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.SearchTermLookupService;
@@ -26,15 +28,6 @@ public class GuidedMatchController {
   private final DecisionTreeService decisionTreeService;
   private final JourneyInstanceService journeyInstanceService;
 
-  @GetMapping("/journey-summaries/{lookup-entry-id}")
-  public GetJourneySummaryResponse getJourneySummary(
-      @PathVariable("lookup-entry-id") final UUID lookupEntryId) {
-
-    log.debug("getJourneySummary(lookup-entry-id: {})", lookupEntryId);
-
-    return searchTermLookupService.getJourneySummary(lookupEntryId);
-  }
-
   @PostMapping(path = "/journeys/{journey-id}", consumes = APPLICATION_JSON_VALUE)
   public StartJourneyResponse startJourney(@PathVariable("journey-id") final String journeyId,
       @RequestBody final JourneySelectionParameters journeySelectionParameters) {
@@ -42,7 +35,15 @@ public class GuidedMatchController {
     log.debug("startJourney(journey-id: {}, journeySelectionParameters: {})", journeyId,
         journeySelectionParameters);
 
-    return decisionTreeService.startJourney(journeyId, journeySelectionParameters);
+    // Start a 'session' by creating and persisting a new Journey Instance
+    JourneyInstance journeyInstance = journeyInstanceService.createJourneyInstance(journeyId,
+        journeySelectionParameters.getSearchTerm());
+
+    // Get the journey first question definition
+    QuestionDefinitionList questionDefinitionList =
+        decisionTreeService.getJourneyFirstQuestion(journeyId);
+
+    return new StartJourneyResponse(journeyInstance.getUuid().toString(), questionDefinitionList);
   }
 
   @PostMapping(path = "/journey-instances/{journey-instance-id}/questions/{question-id}",
@@ -56,8 +57,28 @@ public class GuidedMatchController {
         "getJourneyQuestionOutcome(journey-instance-id: {}, question-id: {}, answeredQuestions: {})",
         journeyInstanceId, questionId, answeredQuestions);
 
-    Outcome outcome = decisionTreeService.getJourneyQuestionOutcome(journeyInstanceId, questionId,
+    // Get the journey instance and update with the current question and answers
+    JourneyInstance journeyInstance =
+        journeyInstanceService.findByUuid(UUID.fromString(journeyInstanceId))
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Journey instance not found: " + journeyInstanceId));
+
+    journeyInstanceService.clearJourneyInstanceHistory(journeyInstanceId, questionId);
+
+    QuestionDefinition questionDefinition =
+        decisionTreeService.getJourneyQuestion(journeyInstanceId, questionId).get(0);
+
+    journeyInstanceService.updateJourneyInstanceQuestions(journeyInstance,
+        questionDefinition.getQuestion());
+    journeyInstanceService.updateJourneyInstanceAnswers(journeyInstance, answeredQuestions,
+        questionDefinition);
+
+    // Get the question outcome from the decision tree service and update the journey instance
+    // outcome
+    Outcome outcome = decisionTreeService.getJourneyQuestionOutcome(journeyInstance, questionId,
         answeredQuestions);
+
+    journeyInstanceService.updateJourneyInstanceOutcome(journeyInstance, outcome);
 
     Set<QuestionHistory> journeyHistory =
         journeyInstanceService.getQuestionHistory(journeyInstanceId);
