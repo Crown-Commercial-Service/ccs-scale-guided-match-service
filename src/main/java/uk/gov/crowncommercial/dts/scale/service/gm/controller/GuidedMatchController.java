@@ -112,7 +112,18 @@ public class GuidedMatchController {
 
     log.debug("searchJourneys(search-term: {})", searchTerm);
 
-    return searchTermLookupService.searchJourneys(searchTerm);
+    List<SearchJourneyResponse>  searchTermResult = searchTermLookupService.searchJourneys(searchTerm);
+    
+    if (searchTermResult.isEmpty()) {
+        log.debug("Using GM Lite Journeys");
+
+    	SearchJourneyResponse sjr = new SearchJourneyResponse();
+        sjr.setJourneyId("c9dd4455-7d23-4822-9912-eab4da9fc5a2");
+        
+        searchTermResult.add(sjr);
+    }
+    
+    return searchTermResult;
   }
 
 }
