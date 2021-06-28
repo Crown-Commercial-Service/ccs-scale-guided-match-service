@@ -69,6 +69,18 @@
             <optional>true</optional>
         </dependency>
 
+		<dependency>
+		  <groupId>com.rollbar</groupId>
+		    <artifactId>rollbar-web</artifactId>
+		    <version>1.7.8</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.rollbar</groupId>
+		    <artifactId>rollbar-spring-boot-webmvc</artifactId>
+		    <version>1.7.8</version>
+		</dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

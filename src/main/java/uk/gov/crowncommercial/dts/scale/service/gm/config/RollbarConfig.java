@@ -1,0 +1,38 @@
+package uk.gov.crowncommercial.dts.scale.service.gm.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+
+import com.rollbar.notifier.Rollbar;
+import com.rollbar.notifier.config.Config;
+import com.rollbar.spring.webmvc.RollbarSpringConfigBuilder;
+
+@Configuration
+public class RollbarConfig {
+
+  @Value("${rollbar.access.token}") 
+  private String rollbarAccessToken;
+  
+  @Value("${environment}")
+  private String environment;
+  
+  /**
+   * Register a Rollbar bean to configure App with Rollbar.
+   */
+  @Bean
+  public Rollbar rollbar() {
+    return new Rollbar(getRollbarConfigs(rollbarAccessToken));
+  }
+
+  private Config getRollbarConfigs(String accessToken) {
+
+    // Reference ConfigBuilder.java for all the properties you can set for Rollbar
+    return RollbarSpringConfigBuilder.withAccessToken(rollbarAccessToken)
+            .environment(environment)
+            .build();
+  }
+}
