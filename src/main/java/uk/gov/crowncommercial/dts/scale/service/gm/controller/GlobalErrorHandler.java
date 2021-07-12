@@ -42,7 +42,7 @@ public class GlobalErrorHandler implements ErrorController {
   public ApiErrors handleValidationException(final Exception exception) {
 
     log.trace("Request validation exception", exception);
-    rollbar.error(exception,"Request validation exception");
+    rollbar.info(exception,"Request validation exception");
 
     ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST.toString(), ERR_MSG_RESOURCE_NOT_FOUND,
         exception.getMessage());
@@ -69,7 +69,7 @@ public class GlobalErrorHandler implements ErrorController {
   public ApiErrors handleResourceNotFoundException(final ResourceNotFoundException exception) {
 
     log.info("Requested resource not found", exception);
-    rollbar.error(exception, "Requested resource not found");
+    rollbar.info(exception, "Requested resource not found");
 
     ApiError apiError =
         new ApiError(HttpStatus.NOT_FOUND.toString(), ERR_MSG_VALIDATION, exception.getMessage());

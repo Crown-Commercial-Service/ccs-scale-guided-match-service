@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+
+import com.rollbar.notifier.Rollbar;
+
 import uk.gov.crowncommercial.dts.scale.service.gm.model.SearchJourneyResponse;
 import uk.gov.crowncommercial.dts.scale.service.gm.repository.SearchDomainRepo;
 
@@ -21,6 +24,9 @@ public class SearchTermLookupServiceTest {
   private static final String MODIFIER_JOURNEY_NAME = "modifier";
   private static final String JOURNEY_SELECTION_TEXT = "selection text";
   private static final String JOURNEY_SELECTION_DESC = "selection desc";
+
+  @MockBean 
+  private Rollbar rollbar;
 
   @MockBean
   private SearchDomainRepo mockSearchDomainRepo;

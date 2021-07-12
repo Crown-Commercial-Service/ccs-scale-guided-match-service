@@ -2,10 +2,7 @@ package uk.gov.crowncommercial.dts.scale.service.gm.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-
 
 import com.rollbar.notifier.Rollbar;
 import com.rollbar.notifier.config.Config;
@@ -14,10 +11,10 @@ import com.rollbar.spring.webmvc.RollbarSpringConfigBuilder;
 @Configuration
 public class RollbarConfig {
 
-  @Value("${rollbar.access.token}") 
+  @Value("${rollbar.access.token:1111111111}") 
   private String rollbarAccessToken;
   
-  @Value("${environment}")
+  @Value("${environment:test}")
   private String environment;
   
   /**
