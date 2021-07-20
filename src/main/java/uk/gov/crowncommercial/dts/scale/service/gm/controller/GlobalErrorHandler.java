@@ -104,10 +104,10 @@ public class GlobalErrorHandler implements ErrorController {
   public ResponseEntity<ApiErrors> handleError(final HttpServletRequest request,
       final HttpServletResponse response) {
 
-    Object exception = request.getAttribute("javax.servlet.error.exception");
+	    Throwable exception = (Throwable) request.getAttribute("javax.servlet.error.exception");
 
-    log.error("Unknown container/filter exception", exception);
-    rollbar.error((Throwable) exception, "Unknown container/filter exception");
+	    log.error("Unknown container/filter exception", exception);
+	    rollbar.error(exception, "Unknown container/filter exception");
 
     return ResponseEntity.badRequest().body(new ApiErrors(Arrays
         .asList(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR.toString(), ERR_MSG_DEFAULT, ""))));
