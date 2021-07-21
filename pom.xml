@@ -68,6 +68,12 @@
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
+		
+		<dependency>
+		    <groupId>com.rollbar</groupId>
+		    <artifactId>rollbar-spring-boot-webmvc</artifactId>
+		    <version>1.7.8</version>
+		</dependency>
 
         <!-- Test dependencies -->
         <dependency>

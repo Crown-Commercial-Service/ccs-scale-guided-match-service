@@ -12,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.rollbar.notifier.Rollbar;
+
 import uk.gov.crowncommercial.dts.scale.service.gm.model.SearchJourneyResponse;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.DecisionTreeService;
 import uk.gov.crowncommercial.dts.scale.service.gm.service.JourneyInstanceService;
@@ -26,6 +29,9 @@ public class GuidedMatchControllerTest {
   @Autowired
   private MockMvc mockMvc;
 
+  @MockBean 
+  private Rollbar rollbar;
+  
   @MockBean
   private SearchTermLookupService service;
 
