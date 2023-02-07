@@ -25,7 +25,7 @@ public interface SearchDomainRepo extends JpaRepository<SearchDomain, Integer> {
   @Query(
       value = "SELECT DISTINCT journey_id\\:\\:varchar, modifier_journey_name, journey_selection_text, journey_selection_description "
           + "FROM search_terms st INNER JOIN search_domains sd ON st.search_id = sd.search_id "
-          + "WHERE SIMILARITY(search_term,?1) > 0.33",
+          + "WHERE SIMILARITY(search_term,?1) > 0.63",
       nativeQuery = true)
   List<Object[]> findBySearchTermFuzzyMatch(String searchTerm);
 
