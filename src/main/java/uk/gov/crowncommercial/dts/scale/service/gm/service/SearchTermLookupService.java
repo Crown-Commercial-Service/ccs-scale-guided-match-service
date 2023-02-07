@@ -1,8 +1,15 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
 import java.util.List;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner; 
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import com.rollbar.notifier.Rollbar;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +33,9 @@ public class SearchTermLookupService {
 
   private final SearchDomainRepo searchDomainRepo;
 
+  @Autowired
+  private Rollbar rollbar;
+  
   public GetJourneySummaryResponse getJourneySummary(final UUID lookupEntryId) {
 
     SearchDomain searchDomain = searchDomainRepo.findByLookupEntryId(lookupEntryId)
@@ -38,11 +48,39 @@ public class SearchTermLookupService {
         searchDomain.getJourneySelectionDescription());
   }
 
+  public String checkStopword(String searchTerm) {
+
+	  String OrginalSearchTerm = searchTerm;
+
+	  try {
+		  File stopwordFile = new File(System.getProperty("user.dir") + "/src/main/resources/stopword.txt");
+
+		  Scanner fileReader = new Scanner(stopwordFile);
+		  while (fileReader.hasNextLine()) {
+			  String stringFromFile = fileReader.nextLine().toLowerCase();
+
+			  searchTerm = searchTerm.replaceAll(String.format("\\b%s\\b",stringFromFile), "").trim();
+
+			  if (searchTerm.isEmpty()) {
+				  fileReader.close();
+				  return OrginalSearchTerm;
+			  }
+		  }
+		  fileReader.close();
+		  return searchTerm;
+	  }catch (FileNotFoundException e) {
+		  log.error("Stopword file not found", e);
+		  rollbar.error(e, "Stopword file not found");
+	  }
+	  return OrginalSearchTerm;
+  }
+
   public List<SearchJourneyResponse> searchJourneys(final String searchTerm) {
 
-    log.debug("Search journeys for searchTerm: '{}'", searchTerm);
+    String searchTermAfterStopword = checkStopword(searchTerm.toLowerCase());
+    log.info("Search term after stopword: {}", searchTermAfterStopword);
 
-    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTerm);
+    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTermAfterStopword);
     log.debug("Found {} matching SearchDomain records", searchDomains.size());
 
     /**
