@@ -59,7 +59,7 @@ public class SearchTermLookupService {
 		  while (fileReader.hasNextLine()) {
 			  String stringFromFile = fileReader.nextLine().toLowerCase();
 
-			  searchTerm = searchTerm.replace(stringFromFile, "").trim();
+			  searchTerm = searchTerm.replaceAll(String.format("\\b%s\\b",stringFromFile), "").trim();
 
 			  if (searchTerm.isEmpty()) {
 				  fileReader.close();
@@ -77,8 +77,10 @@ public class SearchTermLookupService {
 
   public List<SearchJourneyResponse> searchJourneys(final String searchTerm) {
 
-    //log.debug("Search journeys for searchTerm: '{}'", checkStopword(searchTerm.toLowerCase()));
-    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(checkStopword(searchTerm.toLowerCase()));
+    String searchTermAfterStopword = checkStopword(searchTerm.toLowerCase());
+    log.info("Search term after stopword: {}", searchTermAfterStopword);
+
+    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTermAfterStopword);
     log.debug("Found {} matching SearchDomain records", searchDomains.size());
 
     /**
