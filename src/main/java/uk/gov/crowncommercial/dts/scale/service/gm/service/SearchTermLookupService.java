@@ -1,14 +1,18 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
 import java.util.List;
-
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Scanner; 
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+
 import com.rollbar.notifier.Rollbar;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -50,38 +54,39 @@ public class SearchTermLookupService {
 
   public String checkStopword(String searchTerm) {
 
-	  String OrginalSearchTerm = searchTerm;
+	  String orginalSearchTerm = searchTerm;
 
 	  try {
-		  File stopwordFile = new File(System.getProperty("user.dir") + "/src/main/resources/stopword.txt");
+		  ClassPathResource resource = new ClassPathResource("stopwords.txt");
+		  BufferedReader stopwordFile = new BufferedReader(new InputStreamReader(resource.getInputStream()));
 
 		  Scanner fileReader = new Scanner(stopwordFile);
 		  while (fileReader.hasNextLine()) {
 			  String stringFromFile = fileReader.nextLine().toLowerCase();
 
 			  searchTerm = searchTerm.replaceAll(String.format("\\b%s\\b",stringFromFile), "").trim();
-
+			  
 			  if (searchTerm.isEmpty()) {
 				  fileReader.close();
-				  return OrginalSearchTerm;
+				  return orginalSearchTerm;
 			  }
 		  }
 		  fileReader.close();
 		  return searchTerm;
-	  }catch (FileNotFoundException e) {
+	  }catch (IOException e) {
 		  log.error("Stopword file not found", e);
 		  rollbar.error(e, "Stopword file not found");
 	  }
-	  return OrginalSearchTerm;
+	  return orginalSearchTerm;
   }
 
   public List<SearchJourneyResponse> searchJourneys(final String searchTerm) {
 
-    String searchTermAfterStopword = checkStopword(searchTerm.toLowerCase());
-    log.info("Search term after stopword: {}", searchTermAfterStopword);
+	  String searchTermAfterStopword = checkStopword(searchTerm.toLowerCase());
+	    log.info("Search term after stopword: {}", searchTermAfterStopword);
 
-    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTermAfterStopword);
-    log.debug("Found {} matching SearchDomain records", searchDomains.size());
+	    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTermAfterStopword);
+	    log.debug("Found {} matching SearchDomain records", searchDomains.size());
 
     /**
      * Because of using the DISTINCT keyword in the native query, had to use an collection of Object
