@@ -82,9 +82,11 @@ public class SearchTermLookupService {
 
   public List<SearchJourneyResponse> searchJourneys(final String searchTerm) {
 
-    log.debug("Search journeys for searchTerm: '{}'", checkStopword(searchTerm.toLowerCase()));
-    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(checkStopword(searchTerm.toLowerCase()));
-    log.debug("Found {} matching SearchDomain records", searchDomains.size());
+	  String searchTermAfterStopword = checkStopword(searchTerm.toLowerCase());
+	    log.info("Search term after stopword: {}", searchTermAfterStopword);
+
+	    List<Object[]> searchDomains = searchDomainRepo.findBySearchTermFuzzyMatch(searchTermAfterStopword);
+	    log.debug("Found {} matching SearchDomain records", searchDomains.size());
 
     /**
      * Because of using the DISTINCT keyword in the native query, had to use an collection of Object
