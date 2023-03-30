@@ -34,6 +34,9 @@ public class JourneyInstance {
   @Column(name = "original_search_term")
   String originalSearchTerm;
 
+  @Column(name = "selected_domain")
+  String selectedDomain;
+
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "journeyInstance")
   Set<JourneyInstanceQuestion> journeyInstanceQuestions = new HashSet<>();
 

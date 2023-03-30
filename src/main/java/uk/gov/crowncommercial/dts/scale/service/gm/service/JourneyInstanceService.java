@@ -35,7 +35,7 @@ public class JourneyInstanceService {
   private final Clock clock;
 
   public JourneyInstance createJourneyInstance(final String journeyId,
-      final String originalSearchTerm) {
+      final String originalSearchTerm, final String selectedDomain) {
 
     Journey journey = journeyRepo.findById(UUID.fromString(journeyId))
         .orElseThrow(() -> new MissingGMDataException("Journey not found in repo: " + journeyId));
@@ -45,6 +45,7 @@ public class JourneyInstanceService {
     journeyInstance.setJourney(journey);
     journeyInstance.setStartDateTime(LocalDateTime.now(clock));
     journeyInstance.setOriginalSearchTerm(originalSearchTerm);
+    journeyInstance.setSelectedDomain(selectedDomain);
 
     return journeyInstanceRepo.saveAndFlush(journeyInstance);
   }
@@ -233,7 +234,7 @@ public class JourneyInstanceService {
       outcomeData = new AgreementList(agreements);
     }
 
-    return new GetJourneyHistoryResponse(journeyInstance.getOriginalSearchTerm(), null,
+    return new GetJourneyHistoryResponse(journeyInstance.getOriginalSearchTerm(),  journeyInstance.getSelectedDomain(), null,
         Outcome.builder().outcomeType(journeyInstance.getOutcomeType()).data(outcomeData)
             .timestamp(journeyInstance.getEndDateTime().toInstant(ZoneOffset.UTC)).build(),
         getQuestionHistory(journeyInstance));
