@@ -37,7 +37,7 @@ public class GuidedMatchController {
 
     // Start a 'session' by creating and persisting a new Journey Instance
     JourneyInstance journeyInstance = journeyInstanceService.createJourneyInstance(journeyId,
-        journeySelectionParameters.getSearchTerm());
+        journeySelectionParameters.getSearchTerm(),journeySelectionParameters.getSelectedDomain());
 
     // Get the journey first question definition
     QuestionDefinitionList questionDefinitionList =

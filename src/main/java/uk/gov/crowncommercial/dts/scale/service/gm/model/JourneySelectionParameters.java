@@ -9,6 +9,7 @@ import lombok.Value;
 public class JourneySelectionParameters {
 
   String searchTerm;
+  String selectedDomain;
   String modifier;
 
 }

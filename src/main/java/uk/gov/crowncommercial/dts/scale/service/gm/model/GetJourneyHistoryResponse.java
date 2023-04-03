@@ -10,6 +10,7 @@ import lombok.Value;
 public class GetJourneyHistoryResponse {
 
   String searchTerm;
+  String selectedDomain;
   String userId;
   Outcome outcome;
   Set<QuestionHistory> journeyHistory;
