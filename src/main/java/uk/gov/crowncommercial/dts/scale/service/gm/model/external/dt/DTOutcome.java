@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import lombok.Value;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.AgreementList;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeData;
-import uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType;
+import uk.gov.crowncommercial.dts.scale.service.gm.model.*;
 
 /**
  * Varying-type outcome (question, agreement, support)
@@ -19,8 +17,12 @@ public class DTOutcome {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = As.EXTERNAL_PROPERTY,
       property = "outcomeType")
-  @JsonSubTypes({@JsonSubTypes.Type(value = DTQuestionDefinitionList.class, name = "question"),
-      @JsonSubTypes.Type(value = AgreementList.class, name = "agreement")})
+  @JsonSubTypes({
+          @JsonSubTypes.Type(value = DTQuestionDefinitionList.class, name = "question"),
+          @JsonSubTypes.Type(value = AgreementList.class, name = "agreement"),
+          @JsonSubTypes.Type(value = UrlList.class, name = "url")
+  })
+
   @Nullable
   OutcomeData data;
 
