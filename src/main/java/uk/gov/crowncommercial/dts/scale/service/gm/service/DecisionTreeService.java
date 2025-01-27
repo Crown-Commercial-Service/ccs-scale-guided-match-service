@@ -1,6 +1,7 @@
 package uk.gov.crowncommercial.dts.scale.service.gm.service;
 
 import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.AGREEMENT;
+import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.URL;
 import static uk.gov.crowncommercial.dts.scale.service.gm.model.OutcomeType.QUESTION;
 import java.time.Instant;
 import java.util.*;
@@ -102,10 +103,9 @@ public class DecisionTreeService {
     OutcomeData outcomeData = null;
     if (dtOutcome.getOutcomeType() == QUESTION) {
       outcomeData = convertDTQuestionDefinitionList((DTQuestionDefinitionList) dtOutcome.getData());
-    } else if (dtOutcome.getOutcomeType() == AGREEMENT) {
+    } else if (dtOutcome.getOutcomeType() == AGREEMENT || dtOutcome.getOutcomeType() == URL) {
       outcomeData = dtOutcome.getData();
     }
-
     return Outcome.builder().outcomeType(dtOutcome.getOutcomeType()).timestamp(Instant.now())
         .data(outcomeData).build();
   }

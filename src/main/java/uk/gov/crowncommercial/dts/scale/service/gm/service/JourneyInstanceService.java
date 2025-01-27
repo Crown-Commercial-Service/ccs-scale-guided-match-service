@@ -165,9 +165,9 @@ public class JourneyInstanceService {
       final Outcome outcome) {
 
     if (outcome.getOutcomeType() == OutcomeType.AGREEMENT
-        || outcome.getOutcomeType() == OutcomeType.SUPPORT) {
+        || outcome.getOutcomeType() == OutcomeType.SUPPORT || outcome.getOutcomeType() == OutcomeType.URL) {
 
-      log.debug("Outcome is of type AGREEMENT or SUPPORT, updating journey instance");
+      log.debug("Outcome is of type AGREEMENT or SUPPORT or URL, updating journey instance");
 
       journeyInstance.setEndDateTime(LocalDateTime.now(clock));
       journeyInstance.setOutcomeType(outcome.getOutcomeType());
